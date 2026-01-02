@@ -65,6 +65,7 @@ class ProductFactory extends Factory
             'brand' => fake()->randomElement($brands),
             'serving_size' => fake()->randomElement(['30g', '35g', '40g', '5g', '10g']),
             'servings_per_container' => fake()->randomElement([30, 60, 90, 100, 120]),
+            'category_id' => \App\Models\Category::factory(),
             'is_active' => fake()->boolean(90),
         ];
     }
