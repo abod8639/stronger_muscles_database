@@ -24,6 +24,7 @@ class CategoryFactory extends Factory
             ['name' => 'التعافي', 'description' => 'منتجات تساعد على التعافي بعد التمرين'],
             ['name' => 'حرق الدهون', 'description' => 'منتجات لدعم فقدان الوزن'],
             ['name' => 'الصحة العامة', 'description' => 'مكملات للصحة والعافية العامة'],
+            ['name' => 'الكريمات', 'description' => 'كرياتين'],
         ];
 
         $category = fake()->randomElement($categories);

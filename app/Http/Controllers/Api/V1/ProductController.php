@@ -31,31 +31,118 @@ class ProductController extends Controller
                 });
             }
 
-            return $query->paginate(20)->through(function ($product) {
-                return [
-                    'id' => (string) $product->id,
-                    'name' => (string) $product->name,
-                    'price' => (double) $product->price,
-                    'discountPrice' => $product->discount_price ? (double) $product->discount_price : null,
-                    'imageUrls' => is_array($product->image_urls) ? $product->image_urls : [],
-                    'description' => (string) $product->description,
-                    'categoryId' => (string) $product->category_id,
-                    'stockQuantity' => (int) $product->stock_quantity,
-                    'averageRating' => (double) $product->average_rating,
-                    'reviewCount' => (int) $product->review_count,
-                    'brand' => (string) $product->brand,
-                    'servingSize' => (string) $product->serving_size,
-                    'servingsPerContainer' => (int) $product->servings_per_container,
-                    'isActive' => (bool) $product->is_active,
-                    'createdAt' => $product->created_at ? $product->created_at->toIso8601String() : null,
-                    'updatedAt' => $product->updated_at ? $product->updated_at->toIso8601String() : null,
-                ];
-            });
+            return $query->paginate(20)->through(fn($product) => $this->formatProduct($product));
         });
 
         return response()->json([
             'status' => 'success',
             'data' => $products
         ]);
+    }
+
+    public function show(string $id)
+    {
+        $product = Product::findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $this->formatProduct($product)
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|string|unique:products,id',
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0',
+            'image_urls' => 'nullable|array',
+            'description' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'brand' => 'nullable|string|max:255',
+            'serving_size' => 'nullable|string|max:255',
+            'servings_per_container' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $product = Product::create($validated);
+        $this->clearProductCache();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $this->formatProduct($product)
+        ], 201);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        $product = Product::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'price' => 'nullable|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0',
+            'image_urls' => 'nullable|array',
+            'description' => 'nullable|string',
+            'category_id' => 'nullable|exists:categories,id',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'brand' => 'nullable|string|max:255',
+            'serving_size' => 'nullable|string|max:255',
+            'servings_per_container' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $product->update($validated);
+        $this->clearProductCache();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $this->formatProduct($product)
+        ]);
+    }
+
+    public function destroy(string $id)
+    {
+        $product = Product::findOrFail($id);
+        $product->delete();
+        $this->clearProductCache();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product deleted successfully'
+        ], 204);
+    }
+
+    protected function formatProduct(Product $product): array
+    {
+        return [
+            'id' => (string) $product->id,
+            'name' => (string) $product->name,
+            'price' => (double) $product->price,
+            'discountPrice' => $product->discount_price ? (double) $product->discount_price : null,
+            'imageUrls' => is_array($product->image_urls) ? $product->image_urls : [],
+            'description' => (string) $product->description,
+            'categoryId' => (string) $product->category_id,
+            'stockQuantity' => (int) $product->stock_quantity,
+            'averageRating' => (double) $product->average_rating,
+            'reviewCount' => (int) $product->review_count,
+            'brand' => (string) $product->brand,
+            'servingSize' => (string) $product->serving_size,
+            'servingsPerContainer' => (int) $product->servings_per_container,
+            'isActive' => (bool) $product->is_active,
+            'createdAt' => $product->created_at ? $product->created_at->toIso8601String() : null,
+            'updatedAt' => $product->updated_at ? $product->updated_at->toIso8601String() : null,
+        ];
+    }
+
+    protected function clearProductCache(): void
+    {
+        // Simple strategy: clear all products cache keys if possible, 
+        // but since we use dynamic keys, we might need a better strategy or just wait for TTL.
+        // For now, let's assume we can clear by prefix if a cache driver supports it, 
+        // or just accept the 10 min TTL for simplicity in this demo.
+        Cache::flush(); // WARNING: This clears ALL cache. In production use tags or specific keys.
     }
 }
