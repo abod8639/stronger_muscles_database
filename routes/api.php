@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\ImageUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,12 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::get('/categories', [CategoryController::class, 'index']);
+
+    // Image Upload routes
+    Route::post('/upload/product-image', [ImageUploadController::class, 'uploadProductImage']);
+    Route::post('/upload/category-image', [ImageUploadController::class, 'uploadCategoryImage']);
+    Route::post('/upload/image', [ImageUploadController::class, 'uploadImage']);
+    Route::post('/upload/delete', [ImageUploadController::class, 'deleteImage']);
 
     // Admin/Dashboard routes (CRUD for products and categories)
     Route::post('/products', [ProductController::class, 'store']);

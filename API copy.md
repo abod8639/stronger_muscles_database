@@ -5,7 +5,7 @@ static const String baseUrl = 'http://localhost:8080/api/v1';
 // ملاحظة: للهاتف الحقيقي استخدم IP الجهاز، وللمحاكي (Android Emulator) استخدم 10.0.2.2
 // static const String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
-// م للهاتف الحقيقي استخدم IP الجهاز، وللمحاكي (Android ) استخدم 10.0.2.2
+//  للهاتف الحقيقي استخدم IP الجهاز (Android ) استخدم 192.168.1.17
 // static const String baseUrl = 'http://192.168.1.17:8080/api/v1';
 
 // روابط المنتجات
