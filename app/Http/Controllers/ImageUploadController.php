@@ -8,9 +8,7 @@ use Illuminate\Support\Str;
 
 class ImageUploadController extends Controller
 {
-    /**
-     * رفع صورة المنتج
-     */
+
     public function uploadProductImage(Request $request)
     {
         $validated = $request->validate([

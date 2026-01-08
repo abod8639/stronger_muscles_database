@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\ImageUploadController;
@@ -9,6 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    // Auth routes
+    Route::post('/auth/google-signin', [AuthController::class, 'googleSignIn']);
+
+    // Dashboard routes
+    Route::get('/dashboard/users-stats', [DashboardController::class, 'index']);
+
     // Public routes
     // Public routes (Read-only for app)
     Route::get('/products', [ProductController::class, 'index']);
