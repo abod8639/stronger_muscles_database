@@ -33,6 +33,7 @@ class OrderItemFactory extends Factory
                 return $attributes['unit_price'] * $attributes['quantity'];
             },
             'image_url' => fake()->imageUrl(),
+            'flavor' => fake()->flavor(),
         ];
     }
 }

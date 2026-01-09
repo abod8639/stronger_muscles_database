@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('subtotal', 10, 2);
             $table->string('image_url')->nullable();
+            $table->text('flavors')->nullable();
             $table->timestamps();
         });
     }

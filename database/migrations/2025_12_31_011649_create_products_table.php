@@ -27,6 +27,7 @@ return new class extends Migration
             $table->integer('servings_per_container')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->text('flavors')->nullable();
         });
     }
 

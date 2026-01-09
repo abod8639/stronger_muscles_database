@@ -29,6 +29,34 @@ class Product extends Model
         'serving_size',
         'servings_per_container',
         'is_active',
+        // Basic Info
+        'sku',
+        'tags',
+        'weight',
+        'size',
+        'flavor',
+        // Nutrition
+        'nutrition_facts',
+        // Marketing
+        'featured',
+        'new_arrival',
+        'best_seller',
+        'total_sales',
+        'views_count',
+        // Shipping
+        'shipping_weight',
+        'dimensions',
+        // Additional
+        'ingredients',
+        'usage_instructions',
+        'warnings',
+        'expiry_date',
+        'manufacturer',
+        'country_of_origin',
+        // SEO
+        'meta_title',
+        'meta_description',
+        'slug',
     ];
 
     protected function casts(): array
@@ -42,6 +70,18 @@ class Product extends Model
             'servings_per_container' => 'integer',
             'is_active' => 'boolean',
             'image_urls' => 'array',
+            // New casts
+            'tags' => 'array',
+            'flavors' => 'array',
+            'nutrition_facts' => 'array',
+            'dimensions' => 'array',
+            'featured' => 'boolean',
+            'new_arrival' => 'boolean',
+            'best_seller' => 'boolean',
+            'total_sales' => 'integer',
+            'views_count' => 'integer',
+            'shipping_weight' => 'decimal:2',
+            'expiry_date' => 'date',
         ];
     }
 

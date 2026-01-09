@@ -25,6 +25,7 @@ class OrderItem extends Model
         'quantity',
         'subtotal',
         'image_url',
+        'flavors',
     ];
 
     /**
@@ -52,6 +53,7 @@ class OrderItem extends Model
             'unit_price' => 'decimal:2',
             'quantity' => 'integer',
             'subtotal' => 'decimal:2',
+            'flavors' => 'array',
         ];
     }
 

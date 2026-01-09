@@ -38,6 +38,8 @@ class CartItemController extends Controller
             'image_urls' => $validated['image_urls'],
             'quantity' => $validated['quantity'],
             'added_at' => now(),
+            'flavors' => $validated['flavors'],
+
         ]);
 
         return response()->json($cartItem, 201);

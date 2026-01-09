@@ -26,7 +26,8 @@ it('can list active products', function () {
                         'imageUrls',
                         'description',
                         'categoryId',
-                        'isActive'
+                        'isActive',
+                        'flavor'
                     ]
                 ]
             ]

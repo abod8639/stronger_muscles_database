@@ -13,29 +13,24 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $users = User::with(['orders.orderItems.product'])->get();
+    $users = User::withCount('orders')
+      ->withSum('orders as total_spent', 'total_amount')
+      ->get();
 
         $stats = $users->map(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
+        'email' => $user->email,
+        'phone' => $user->phone_number,
+        'role' => 'customer', // Static for now as no role column exists
+        'is_active' => (bool) $user->is_active,
                 'photo_url' => $user->photo_url,
-                'has_ordered' => $user->orders->isNotEmpty(),
-                'orders_count' => $user->orders->count(),
-                'orders' => $user->orders->map(function ($order) {
-                    return [
-                        'id' => $order->id,
-                        'status' => $order->status,
-                        'total_amount' => $order->total_amount,
-                        'items' => $order->orderItems->map(function ($item) {
-                            return [
-                                'product_name' => $item->product ? $item->product->name : $item->product_name, // Fallback if product deleted
-                                'quantity' => $item->quantity,
-                                'image_url' => $item->product ? ($item->product->image_urls[0] ?? null) : $item->image_url,
-                            ];
-                        }),
-                    ];
-                }),
+        'total_spent' => (float) ($user->total_spent ?? 0),
+        'created_at' => $user->created_at->toIso8601String(),
+        'last_login' => null, // Placeholder as not currently tracked in users table
+        'addresses' => [], // Placeholder as no addresses table exists
+        'orders_count' => (int) $user->orders_count,
             ];
         });
 

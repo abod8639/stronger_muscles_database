@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('image_urls')->nullable();
             $table->integer('quantity')->default(1);
             $table->dateTime('added_at')->useCurrent();
+            $table->text('flavors')->nullable();
             $table->timestamps();
         });
     }

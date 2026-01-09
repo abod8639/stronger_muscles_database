@@ -36,35 +36,28 @@ test('dashboard users stats returns correct data structure', function () {
                 '*' => [
                     'id',
                     'name',
+                    'email',
+                    'phone',
+                    'role',
+                    'is_active',
                     'photo_url',
-                    'has_ordered',
+                    'total_spent',
+                    'created_at',
+                    'last_login',
+                    'addresses',
                     'orders_count',
-                    'orders' => [
-                        '*' => [
-                            'id',
-                            'status',
-                            'total_amount',
-                            'items' => [
-                                '*' => [
-                                    'product_name',
-                                    'quantity',
-                                    'image_url',
-                                ],
-                            ],
-                        ],
-                    ],
                 ],
             ],
         ]);
 
     // Verify user with order
     $userData = collect($response->json('users'))->firstWhere('id', $userWithOrder->id);
-    expect($userData['has_ordered'])->toBeTrue()
-        ->and($userData['orders'][0]['status'])->toBe('pending')
-        ->and($userData['orders'][0]['items'][0]['product_name'])->toBe('Test Product');
+    expect($userData['orders_count'])->toBe(1)
+        ->and($userData['total_spent'])->toEqual(100.0)
+        ->and($userData['role'])->toBe('customer');
 
     // Verify user without order
     $noOrderUserData = collect($response->json('users'))->firstWhere('id', $userWithoutOrder->id);
-    expect($noOrderUserData['has_ordered'])->toBeFalse()
-        ->and($noOrderUserData['orders'])->toBeEmpty();
+    expect($noOrderUserData['orders_count'])->toBe(0)
+        ->and($noOrderUserData['total_spent'])->toEqual(0.0);
 });

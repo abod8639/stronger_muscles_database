@@ -25,6 +25,7 @@ class CartItem extends Model
         'image_urls',
         'quantity',
         'added_at',
+        'flavors',
     ];
 
     /**
@@ -53,6 +54,7 @@ class CartItem extends Model
             'quantity' => 'integer',
             'added_at' => 'datetime',
             'image_urls' => 'array',
+            'flavors' => 'array',
         ];
     }
 

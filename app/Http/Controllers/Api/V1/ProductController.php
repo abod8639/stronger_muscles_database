@@ -65,6 +65,7 @@ class ProductController extends Controller
             'serving_size' => 'nullable|string|max:255',
             'servings_per_container' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
+            'flavors' => 'nullable|array',
         ]);
 
         $product = Product::create($validated);
@@ -92,6 +93,7 @@ class ProductController extends Controller
             'serving_size' => 'nullable|string|max:255',
             'servings_per_container' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
+            'flavors' => 'nullable|array',
         ]);
 
         $product->update($validated);
@@ -134,6 +136,7 @@ class ProductController extends Controller
             'isActive' => (bool) $product->is_active,
             'createdAt' => $product->created_at ? $product->created_at->toIso8601String() : null,
             'updatedAt' => $product->updated_at ? $product->updated_at->toIso8601String() : null,
+            'flavor' => is_array($product->flavors) ? $product->flavors : [],
         ];
     }
 
