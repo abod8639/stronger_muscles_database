@@ -34,7 +34,7 @@ class Product extends Model
         'tags',
         'weight',
         'size',
-        'flavor',
+        'flavors',
         // Nutrition
         'nutrition_facts',
         // Marketing
@@ -57,6 +57,8 @@ class Product extends Model
         'meta_title',
         'meta_description',
         'slug',
+        'flavors',
+
     ];
 
     protected function casts(): array
@@ -82,6 +84,7 @@ class Product extends Model
             'views_count' => 'integer',
             'shipping_weight' => 'decimal:2',
             'expiry_date' => 'date',
+            'size' => 'array',
         ];
     }
 

@@ -28,6 +28,8 @@ class CartItemController extends Controller
             'price' => 'required|numeric',
             'image_urls' => 'nullable|array',
             'quantity' => 'required|integer|min:1',
+            'flavors' => 'nullable|array',
+            'size' => 'nullable|array',
         ]);
 
         $cartItem = $request->user()->cartItems()->create([
@@ -37,9 +39,9 @@ class CartItemController extends Controller
             'price' => $validated['price'],
             'image_urls' => $validated['image_urls'],
             'quantity' => $validated['quantity'],
+            'flavors' => $validated['flavors'] ?? [],
+            'size' => $validated['size'] ?? [],
             'added_at' => now(),
-            'flavors' => $validated['flavors'],
-
         ]);
 
         return response()->json($cartItem, 201);

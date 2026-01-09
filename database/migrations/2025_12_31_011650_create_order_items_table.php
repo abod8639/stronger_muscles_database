@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2);
             $table->string('image_url')->nullable();
             $table->text('flavors')->nullable();
+            $table->string('size')->nullable();
             $table->timestamps();
         });
     }

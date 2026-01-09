@@ -27,7 +27,8 @@ it('can list active products', function () {
                         'description',
                         'categoryId',
                         'isActive',
-                        'flavor'
+                        'flavors',
+                        'size'
                     ]
                 ]
             ]

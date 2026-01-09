@@ -67,7 +67,8 @@ class ProductFactory extends Factory
             'servings_per_container' => fake()->randomElement([30, 60, 90, 100, 120]),
             'category_id' => \App\Models\Category::factory(),
             'is_active' => fake()->boolean(90),
-            'flavors' => [fake()->randomElement(['نكهة الشوكولاتة', 'نكهة الفانيليا', 'نكهة الفراولة', 'بدون نكهة'])]
+            'flavors' => [fake()->randomElement(['نكهة الشوكولاتة', 'نكهة الفانيليا', 'نكهة الفراولة', 'بدون نكهة'])],
+            'size' => [fake()->randomElement(['M', 'L', 'XL', 'XXL'])],
         ];
     }
 }

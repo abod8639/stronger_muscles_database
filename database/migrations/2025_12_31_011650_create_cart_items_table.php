@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->dateTime('added_at')->useCurrent();
             $table->text('flavors')->nullable();
+            $table->text('size')->nullable();
             $table->timestamps();
         });
     }

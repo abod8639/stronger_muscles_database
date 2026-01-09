@@ -32,6 +32,7 @@ class CartItemFactory extends Factory
             'quantity' => fake()->numberBetween(1, 5),
             'added_at' => now(),
             'flavors' => [fake()->flavor()],
+            'size' => fake()->size(),
         ];
     }
 }
