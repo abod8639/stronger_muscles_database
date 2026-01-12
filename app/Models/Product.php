@@ -57,7 +57,7 @@ class Product extends Model
         'meta_title',
         'meta_description',
         'slug',
-        'flavors',
+        // 'flavors',
 
     ];
 

@@ -17,6 +17,7 @@ class Order extends Model
      *
      * @var list<string>
      */
+    // public $incrementing = true;
     protected $fillable = [
         'id',
         'user_id',
