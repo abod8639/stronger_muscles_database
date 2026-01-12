@@ -48,9 +48,18 @@ class AuthController extends Controller
     $token = 'sanctum-not-installed-placeholder-token';
 
     return response()->json([
+      'status' => 'success',
       'access_token' => $token,
       'token_type' => 'Bearer',
-      'user' => $user,
+      'user' => [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'photo_url' => $user->photo_url,
+        'token' => $token, // إرسال التوكن داخل كائن المستخدم يسهل العمل في Flutter
+        'role' => $user->role ?? 'user',
+        'created_at' => $user->created_at->toIso8601String(),
+      ],
     ]);
   }
 }
