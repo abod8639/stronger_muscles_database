@@ -137,13 +137,12 @@ class ProductController extends Controller
             'servingsPerContainer' => (int) $product->servings_per_container,
             'isActive' => (bool) $product->is_active,
 
-            // أضف هذه الحقول المفقودة ليتوافق مع مودل Flutter تماماً:
             'sku' => (string) $product->sku,
             'tags' => is_array($product->tags) ? $product->tags : [],
             'weight' => (double) $product->weight,
             'size' => is_array($product->size) ? $product->size : [],
             'flavors' => is_array($product->flavors) ? $product->flavors : [],
-            'nutrition_facts' => $product->nutrition_facts, // سيتم إرساله كـ JSON object
+            'nutrition_facts' => $product->nutrition_facts,
             'ingredients' => is_array($product->ingredients) ? $product->ingredients : [],
             'featured' => (bool) $product->featured,
             'new_arrival' => (bool) $product->new_arrival,

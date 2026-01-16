@@ -16,10 +16,9 @@ return new class extends Migration {
             $table->json('tags')->nullable()->after('description');
 
             $table->string('weight')->nullable()->after('tags');
-            $table->string('size')->nullable()->after('weight');
 
             // Nutrition Facts
-            $table->json('nutrition_facts')->nullable()->after('size');
+            $table->json('nutrition_facts')->nullable()->after('weight');
 
             // Marketing
             $table->boolean('featured')->default(false)->after('is_active');
@@ -60,7 +59,7 @@ return new class extends Migration {
                 'sku',
                 'tags',
                 'weight',
-                'size',
+                'weight',
                 'nutrition_facts',
                 'featured',
                 'new_arrival',

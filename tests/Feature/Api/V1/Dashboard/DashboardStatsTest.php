@@ -27,7 +27,9 @@ test('dashboard users stats returns correct data structure', function () {
         'quantity' => 2,
     ]);
 
-    $response = $this->getJson('/api/v1/dashboard/users-stats');
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $response = $this->actingAs($admin, 'sanctum')->getJson('/api/v1/dashboard/users-stats');
 
     $response->assertStatus(200)
         ->assertJsonStructure([
@@ -54,7 +56,7 @@ test('dashboard users stats returns correct data structure', function () {
     $userData = collect($response->json('users'))->firstWhere('id', $userWithOrder->id);
     expect($userData['orders_count'])->toBe(1)
         ->and($userData['total_spent'])->toEqual(100.0)
-        ->and($userData['role'])->toBe('customer');
+        ->and($userData['role'])->toBe('user');
 
     // Verify user without order
     $noOrderUserData = collect($response->json('users'))->firstWhere('id', $userWithoutOrder->id);

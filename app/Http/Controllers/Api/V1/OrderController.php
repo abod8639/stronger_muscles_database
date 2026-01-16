@@ -41,12 +41,12 @@ class OrderController extends Controller
             'payment_method' => $order->payment_method,
             'address_id' => (string) $order->address_id,
             'subtotal' => (double) $order->subtotal,
-            'shippingCost' => (double) $order->shipping_cost, // تحويل للاسم المتوقع في Flutter
+            'shippingCost' => (double) $order->shipping_cost,
             'discount' => (double) $order->discount,
             'total_amount' => (double) $order->total_amount,
             'tracking_number' => $order->tracking_number,
             'notes' => $order->notes,
-            'shipping_address' => $order->shipping_address, // التأكد من مطابقة الاسم
+            'shipping_address' => $order->shipping_address,
             'order_items' => $order->orderItems->map(fn($item) => [
                 'id' => (string) $item->id,
                 'order_id' => (string) $item->order_id,

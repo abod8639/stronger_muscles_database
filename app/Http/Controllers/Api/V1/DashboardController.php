@@ -22,8 +22,7 @@ class DashboardController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
         'email' => $user->email,
-        'phone' => $user->phone_number,
-        'role' => 'customer', // Static for now as no role column exists
+                'phone' => $user->phone_number,
         'is_active' => (bool) $user->is_active,
                 'photo_url' => $user->photo_url,
         'total_spent' => (float) ($user->total_spent ?? 0),

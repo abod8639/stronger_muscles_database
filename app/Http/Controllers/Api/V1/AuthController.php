@@ -43,9 +43,8 @@ class AuthController extends Controller
       }
     }
 
-    // Sanctum is not installed, so we cannot generate a token yet.
-    // $token = $user->createToken('auth_token')->plainTextToken;
-    $token = 'sanctum-not-installed-placeholder-token';
+    // Generate real Sanctum token
+    $token = $user->createToken('auth_token')->plainTextToken;
 
     return response()->json([
       'status' => 'success',
@@ -56,8 +55,7 @@ class AuthController extends Controller
         'name' => $user->name,
         'email' => $user->email,
         'photo_url' => $user->photo_url,
-        'token' => $token, // إرسال التوكن داخل كائن المستخدم يسهل العمل في Flutter
-        'role' => $user->role ?? 'user',
+        'token' => $token,
         'created_at' => $user->created_at->toIso8601String(),
       ],
     ]);

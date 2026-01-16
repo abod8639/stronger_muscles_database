@@ -14,14 +14,20 @@ Route::prefix('v1')->group(function () {
     // Auth routes
     Route::post('/auth/google-signin', [AuthController::class, 'googleSignIn']);
 
-    // Dashboard routes
-    Route::get('/dashboard/users-stats', [DashboardController::class, 'index']);
-
-    // Public routes
-    // Public routes (Read-only for app)
+    // Public routes (Read and Write for anyone)
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
     Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
+    // Dashboard routes
+    Route::get('/dashboard/users-stats', [DashboardController::class, 'index']);
 
     // Image Upload routes
     Route::post('/upload/product-image', [ImageUploadController::class, 'uploadProductImage']);
@@ -29,21 +35,11 @@ Route::prefix('v1')->group(function () {
     Route::post('/upload/image', [ImageUploadController::class, 'uploadImage']);
     Route::post('/upload/delete', [ImageUploadController::class, 'deleteImage']);
 
-    // Admin/Dashboard routes (CRUD for products and categories)
-    Route::post('/products', [ProductController::class, 'store']);
-    Route::put('/products/{id}', [ProductController::class, 'update']);
-    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-
-    Route::post('/categories', [CategoryController::class, 'store']);
-    Route::put('/categories/{id}', [CategoryController::class, 'update']);
-    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
-
-    // Order routes (Public for Dashboard)
+    // Orders
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
-    Route::post('/orders', [OrderController::class, 'store']);
 
-    // Protected routes
+    // Protected routes (Only those that explicitly need a user identity)
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user', function (Request $request) {
             return $request->user();
@@ -51,5 +47,8 @@ Route::prefix('v1')->group(function () {
 
         // Cart routes
         Route::apiResource('cart', CartItemController::class);
+
+        // Order creation (Keep protected if you want orders linked to Users)
+        Route::post('/orders', [OrderController::class, 'store']);
     });
 });
