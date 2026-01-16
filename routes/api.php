@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
     // Auth routes
     Route::post('/auth/google-signin', [AuthController::class, 'googleSignIn']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
 
     // Public routes (Read and Write for anyone)
     Route::get('/products', [ProductController::class, 'index']);
