@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1\Customer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\OrderItem;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -32,8 +34,56 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        // TODO: Implement order placement logic
-        return response()->json(['message' => 'Order processing not implemented yet'], 501);
+        $validated = $request->validate([
+            'id' => 'required|string',
+            'order_items' => 'required|array',
+            'subtotal' => 'required|numeric',
+            'shippingCost' => 'required|numeric',
+            'total_amount' => 'required|numeric',
+            'shipping_address' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        return DB::transaction(function () use ($request, $validated) {
+            $user = $request->user();
+
+            $order = Order::create([
+                'id' => $validated['id'],
+                'user_id' => $user->id,
+                'order_date' => now(),
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'payment_method' => $request->payment_method ?? 'cash',
+                'address_id' => $request->address_id,
+                'shipping_address_snapshot' => $request->shipping_address ?? '',
+                'subtotal' => $validated['subtotal'],
+                'shipping_cost' => $validated['shippingCost'],
+                'discount' => $request->discount ?? 0,
+                'total_amount' => $validated['total_amount'],
+                'notes' => $validated['notes'],
+            ]);
+
+            foreach ($request->order_items as $item) {
+                OrderItem::create([
+                    'id' => $item['id'],
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'],
+                    'product_name' => $item['product_name'],
+                    'unit_price' => $item['unit_price'],
+                    'quantity' => $item['quantity'],
+                    'subtotal' => $item['subtotal'],
+                    'image_url' => $item['image_url'] ?? null,
+                    'flavors' => isset($item['selectedFlavor']) ? [$item['selectedFlavor']] : [],
+                    'size' => isset($item['selectedSize']) ? [$item['selectedSize']] : [],
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order placed successfully',
+                'data' => $this->formatOrder($order->load('orderItems'))
+            ], 201);
+        });
     }
 
     /**
