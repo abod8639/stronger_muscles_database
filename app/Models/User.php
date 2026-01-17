@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'photo_url',
+        'phone_number',
     ];
 
     /**
@@ -47,8 +48,6 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
-
 
     /**
      * Get the orders for the user.

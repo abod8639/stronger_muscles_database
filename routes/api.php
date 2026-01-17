@@ -15,6 +15,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/google-signin', [AuthController::class, 'googleSignIn']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 
+    Route::middleware('auth:sanctum')->post('/auth/update-profile', [AuthController::class, 'updateProfile']);
+
     // Public routes (Read and Write for anyone)
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
@@ -53,3 +55,30 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders', [OrderController::class, 'store']);
     });
 });
+
+
+// Route::prefix('v1')->group(function () {
+
+//     // --- 1. مسارات لوحة التحكم (Dashboard/Admin) ---
+//     // يجب حمايتها بـ Middleware للتأكد من أن المستخدم "Admin"
+//     Route::middleware(['auth:sanctum', 'isAdmin'])->prefix('admin')->group(function () {
+//         Route::apiResource('products', AdminProductController::class);
+//         Route::apiResource('categories', AdminCategoryController::class);
+//         Route::get('/stats', [DashboardController::class, 'index']);
+//         Route::post('/upload', [ImageUploadController::class, 'upload']);
+//     });
+
+//     // --- 2. مسارات التطبيق (Customer/Authenticated) ---
+//     // خاصة بالمستخدم المسجل فقط
+//     Route::middleware('auth:sanctum')->prefix('customer')->group(function () {
+//         Route::get('/profile', [AuthController::class, 'profile']);
+//         Route::apiResource('cart', CartController::class);
+//         Route::post('/orders', [OrderController::class, 'store']);
+//         Route::get('/my-orders', [OrderController::class, 'userOrders']);
+//     });
+
+//     // --- 3. مسارات عامة (Public/Guest) ---
+//     // متاحة للكل (تطبيق + موقع) للعرض فقط
+//     Route::get('/shop/products', [PublicProductController::class, 'index']);
+//     Route::get('/shop/categories', [PublicCategoryController::class, 'index']);
+// });
