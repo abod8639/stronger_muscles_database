@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1;
+namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\CartItem;
 use Illuminate\Http\Request;
+use App\Models\CartItem;
 use Illuminate\Support\Str;
 
-class CartItemController extends Controller
+class CartController extends Controller
 {
     /**
-     * Display a listing of the user's cart items.
+     * Display a listing of the resource.
      */
     public function index(Request $request)
     {
@@ -18,7 +18,7 @@ class CartItemController extends Controller
     }
 
     /**
-     * Store a newly created cart item.
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
@@ -48,7 +48,18 @@ class CartItemController extends Controller
     }
 
     /**
-     * Update the specified cart item.
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        // Not typically used for individual cart items via API, usually handled in index/update/destroy
+        // But for resource consistency:
+        // return $request->user()->cartItems()->findOrFail($id);
+        return response()->json(['message' => 'Not implemented'], 501);
+    }
+
+    /**
+     * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
@@ -64,10 +75,11 @@ class CartItemController extends Controller
     }
 
     /**
-     * Remove the specified cart item.
+     * Remove the specified resource from storage.
      */
     public function destroy(Request $request, string $id)
     {
+        // Parameter check logic for $id vs $request used in Laravel resource controllers
         $cartItem = $request->user()->cartItems()->findOrFail($id);
         $cartItem->delete();
 

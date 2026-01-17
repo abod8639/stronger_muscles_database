@@ -50,74 +50,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'id' => 'required|string|unique:products,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0',
-            'image_urls' => 'nullable|array',
-            'description' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'brand' => 'nullable|string|max:255',
-            'serving_size' => 'nullable|string|max:255',
-            'servings_per_container' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-            'flavors' => 'nullable|array',
-            'size' => 'nullable|array',
-        ]);
-
-        $product = Product::create($validated);
-        $this->clearProductCache();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $this->formatProduct($product)
-        ], 201);
-    }
-
-    public function update(Request $request, string $id)
-    {
-        $product = Product::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0',
-            'image_urls' => 'nullable|array',
-            'description' => 'nullable|string',
-            'category_id' => 'nullable|exists:categories,id',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'brand' => 'nullable|string|max:255',
-            'serving_size' => 'nullable|string|max:255',
-            'servings_per_container' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-            'flavors' => 'nullable|array',
-            'size' => 'nullable|array',
-        ]);
-
-        $product->update($validated);
-        $this->clearProductCache();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $this->formatProduct($product)
-        ]);
-    }
-
-    public function destroy(string $id)
-    {
-        $product = Product::findOrFail($id);
-        $product->delete();
-        $this->clearProductCache();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Product deleted successfully'
-        ], 204);
-    }
+    // Write methods removed for Public Controller
 
     protected function formatProduct(Product $product): array
     {
@@ -154,12 +87,5 @@ class ProductController extends Controller
         ];
     }
 
-    protected function clearProductCache(): void
-    {
-        // Simple strategy: clear all products cache keys if possible, 
-        // but since we use dynamic keys, we might need a better strategy or just wait for TTL.
-        // For now, let's assume we can clear by prefix if a cache driver supports it, 
-        // or just accept the 10 min TTL for simplicity in this demo.
-        Cache::flush(); // WARNING: This clears ALL cache. In production use tags or specific keys.
-    }
+    // Cache clearing logic moved to Admin Controller
 }

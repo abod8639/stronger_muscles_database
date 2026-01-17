@@ -1,35 +1,54 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1;
+namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Models\Order;
 
 class OrderController extends Controller
 {
     /**
-     * Display a listing of orders.
+     * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        // If authenticated, get user's orders. If not (Dashboard context), get all orders.
-        if ($request->user()) {
-            $orders = $request->user()->orders()->with('orderItems')->latest()->get();
-        } else {
-            $orders = Order::with('orderItems')->latest()->get();
-        }
-        
-        return response()->json($orders);
+        $limit = $request->query('limit', 20);
+        $orders = $request->user()
+            ->orders()
+            ->with(['orderItems', 'orderItems.product'])
+            ->latest()
+            ->paginate($limit)
+            ->through(fn($order) => $this->formatOrder($order));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $orders
+        ]);
     }
 
     /**
-     * Store a newly created order (Simplified for now).
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
+        // TODO: Implement order placement logic
         return response()->json(['message' => 'Order processing not implemented yet'], 501);
     }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Request $request, string $id)
+    {
+        $order = $request->user()->orders()->with(['orderItems', 'orderItems.product'])->findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $this->formatOrder($order)
+        ]);
+    }
+
     protected function formatOrder(Order $order): array
     {
         return [
@@ -46,12 +65,12 @@ class OrderController extends Controller
             'total_amount' => (double) $order->total_amount,
             'tracking_number' => $order->tracking_number,
             'notes' => $order->notes,
-            'shipping_address' => $order->shipping_address,
+            'shipping_address' => $order->shipping_address_snapshot,
             'order_items' => $order->orderItems->map(fn($item) => [
                 'id' => (string) $item->id,
                 'order_id' => (string) $item->order_id,
                 'product_id' => (string) $item->product_id,
-                'product_name' => $item->product_name,
+                'product_name' => $item->product_name ?? 'Unknown Product',
                 'unit_price' => (double) $item->unit_price,
                 'quantity' => (int) $item->quantity,
                 'subtotal' => (double) $item->subtotal,
@@ -62,18 +81,5 @@ class OrderController extends Controller
             'createdAt' => $order->created_at->toIso8601String(),
             'updatedAt' => $order->updated_at->toIso8601String(),
         ];
-    }
-    /**
-     * Display the specified order.
-     */
-    public function show(Request $request, string $id)
-    {
-        if ($request->user()) {
-            $order = $request->user()->orders()->with('orderItems.product')->findOrFail($id);
-        } else {
-            $order = Order::with('orderItems.product')->findOrFail($id);
-        }
-        
-        return response()->json($order);
     }
 }

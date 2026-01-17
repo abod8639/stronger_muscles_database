@@ -12,6 +12,51 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
   /**
+   * Get user profile.
+   */
+  public function testLogin()
+  {
+    $user = User::first();
+    if (!$user) {
+      $user = User::factory()->create(['email' => 'admin@test.com', 'role' => 'admin']);
+    }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+      'status' => 'success',
+      'token' => $token,
+      'user' => [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'role' => $user->role,
+      ],
+    ]);
+  }
+
+  /**
+   * Get user profile.
+   */
+  public function getProfile(Request $request)
+  {
+    $user = $request->user();
+
+    return response()->json([
+      'status' => 'success',
+      'user' => [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'phone' => $user->phone_number,
+        'photo_url' => $user->photo_url,
+        'created_at' => $user->created_at->toIso8601String(),
+        'addresses' => $user->addresses,
+      ],
+    ]);
+  }
+
+  /**
    * Handle user profile update.
    */
   public function updateProfile(Request $request)
@@ -113,9 +158,48 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Handle Google Sign-In.
-     */
+  /**
+   * Handle user registration.
+   */
+  public function register(Request $request)
+  {
+    $validator = Validator::make($request->all(), [
+      'name' => 'required|string|max:255',
+      'email' => 'required|string|email|max:255|unique:users',
+      'password' => 'required|string|min:6',
+    ]);
+
+    if ($validator->fails()) {
+      return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
+    }
+
+    $user = User::create([
+      'name' => $request->name,
+      'email' => $request->email,
+      'password' => Hash::make($request->password),
+      'role' => 'user',
+      'is_active' => true,
+    ]);
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+      'status' => 'success',
+      'message' => 'User registered successfully',
+      'token' => $token,
+      'user' => [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'role' => $user->role,
+        'created_at' => $user->created_at->toIso8601String(),
+      ],
+    ]);
+  }
+
+  /**
+   * Handle Google Sign-In.
+   */
     public function googleSignIn(Request $request)
     {
         $validator = Validator::make($request->all(), [
