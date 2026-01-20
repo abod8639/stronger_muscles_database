@@ -11,8 +11,12 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('order_items', function (Blueprint $table) {
-            $table->text('flavors')->nullable()->after('image_url');
-            $table->text('size')->nullable()->after('flavors');
+            if (!Schema::hasColumn('order_items', 'flavors')) {
+                $table->text('flavors')->nullable()->after('image_url');
+            }
+            if (!Schema::hasColumn('order_items', 'size')) {
+                $table->text('size')->nullable()->after('flavors');
+            }
         });
     }
 

@@ -50,6 +50,7 @@ class CategoryController extends Controller
             'sortOrder' => (int) $category->sort_order,
             'isActive' => (bool) $category->is_active,
             'createdAt' => $category->created_at ? $category->created_at->toIso8601String() : null,
+            'icon' => $category->icon,
         ];
     }
 }

@@ -33,6 +33,7 @@ class CategoryController extends Controller
             'image_url' => 'nullable|string',
             'sort_order' => 'nullable|integer',
             'is_active' => 'nullable|boolean',
+            'icon' => 'nullable|string',
         ]);
 
         $category = Category::create($validated);
@@ -68,6 +69,7 @@ class CategoryController extends Controller
             'image_url' => 'nullable|string',
             'sort_order' => 'nullable|integer',
             'is_active' => 'nullable|boolean',
+            'icon' => 'nullable|string',
         ]);
 
         $category->update($validated);
@@ -108,6 +110,7 @@ class CategoryController extends Controller
             'sortOrder' => (int) $category->sort_order,
             'isActive' => (bool) $category->is_active,
             'createdAt' => $category->created_at ? $category->created_at->toIso8601String() : null,
+            'icon' => $category->icon,
         ];
     }
 }

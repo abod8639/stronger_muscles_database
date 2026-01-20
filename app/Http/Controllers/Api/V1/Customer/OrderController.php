@@ -61,6 +61,7 @@ class OrderController extends Controller
                 'discount' => $request->discount ?? 0,
                 'total_amount' => $validated['total_amount'],
                 'notes' => $validated['notes'],
+                'phone_number' => $validated['phone_number']
             ]);
 
             foreach ($request->order_items as $item) {
@@ -114,6 +115,7 @@ class OrderController extends Controller
             'discount' => (double) $order->discount,
             'total_amount' => (double) $order->total_amount,
             'tracking_number' => $order->tracking_number,
+            'phone_number' => $order->phone_number,
             'notes' => $order->notes,
             'shipping_address' => $order->shipping_address_snapshot,
             'order_items' => $order->orderItems->map(fn($item) => [
