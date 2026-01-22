@@ -35,18 +35,65 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|string',
+            'id' => 'required|string|unique:orders,id',
             'order_items' => 'required|array',
-            'subtotal' => 'required|numeric',
-            'shippingCost' => 'required|numeric',
-            'total_amount' => 'required|numeric',
+            'order_items.*.product_id' => 'required|exists:products,id',
+            'order_items.*.quantity' => 'required|integer|min:1',
+            'shippingCost' => 'required|numeric|min:0',
+            'payment_method' => 'nullable|string',
+            'address_id' => 'nullable|string',
             'shipping_address' => 'nullable|string',
             'notes' => 'nullable|string',
+            'phone_number' => 'nullable|string', // Validated to ensure it's captured
+            'discount' => 'nullable|numeric|min:0',
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
             $user = $request->user();
+            $calculatedSubtotal = 0;
+            $orderItemsData = [];
 
+            foreach ($request->order_items as $item) {
+                // Race Conditions: Lock the product row
+                $product = \App\Models\Product::where('id', $item['product_id'])->lockForUpdate()->first();
+
+                // Inventory Management: Check stock
+                if ($product->stock_quantity < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for product: {$product->name}");
+                }
+
+                // Security: Use server-side price
+                // Prefer discount_price if it is active (e.g. > 0 and < price)
+                $unitPrice = ($product->discount_price > 0 && $product->discount_price < $product->price)
+                    ? $product->discount_price
+                    : $product->price;
+
+                $lineSubtotal = $unitPrice * $item['quantity'];
+                $calculatedSubtotal += $lineSubtotal;
+
+                // Inventory Management: Deduct stock
+                $product->stock_quantity -= $item['quantity'];
+                $product->save();
+
+                $orderItemsData[] = [
+                    'id' => $item['id'] ?? (string) \Illuminate\Support\Str::uuid(),
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'unit_price' => $unitPrice,
+                    'quantity' => $item['quantity'],
+                    'subtotal' => $lineSubtotal,
+                    'image_url' => $product->image_urls[0] ?? null,
+                    'flavors' => isset($item['selectedFlavor']) ? [$item['selectedFlavor']] : [],
+                    'size' => isset($item['selectedSize']) ? [$item['selectedSize']] : [],
+                ];
+            }
+
+            // Final Calculation
+            $shippingCost = $validated['shippingCost'];
+            $discount = $request->discount ?? 0;
+            $grandTotal = $calculatedSubtotal + $shippingCost - $discount;
+
+            // Create Order
             $order = Order::create([
                 'id' => $validated['id'],
                 'user_id' => $user->id,
@@ -56,27 +103,18 @@ class OrderController extends Controller
                 'payment_method' => $request->payment_method ?? 'cash',
                 'address_id' => $request->address_id,
                 'shipping_address_snapshot' => $request->shipping_address ?? '',
-                'subtotal' => $validated['subtotal'],
-                'shipping_cost' => $validated['shippingCost'],
-                'discount' => $request->discount ?? 0,
-                'total_amount' => $validated['total_amount'],
+                'subtotal' => $calculatedSubtotal,
+                'shipping_cost' => $shippingCost,
+                'discount' => $discount,
+                'total_amount' => $grandTotal,
                 'notes' => $validated['notes'],
-                'phone_number' => $validated['phone_number']
+                'phone_number' => $request->phone_number,
             ]);
 
-            foreach ($request->order_items as $item) {
-                OrderItem::create([
-                    'id' => $item['id'],
-                    'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'product_name' => $item['product_name'],
-                    'unit_price' => $item['unit_price'],
-                    'quantity' => $item['quantity'],
-                    'subtotal' => $item['subtotal'],
-                    'image_url' => $item['image_url'] ?? null,
-                    'flavors' => isset($item['selectedFlavor']) ? [$item['selectedFlavor']] : [],
-                    'size' => isset($item['selectedSize']) ? [$item['selectedSize']] : [],
-                ]);
+            // Create Order Items
+            foreach ($orderItemsData as $itemData) {
+                $itemData['order_id'] = $order->id;
+                OrderItem::create($itemData);
             }
 
             return response()->json([
