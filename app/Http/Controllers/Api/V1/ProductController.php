@@ -4,88 +4,98 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Http\Resources\Api\V1\ProductResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProductController extends Controller
 {
+    /**
+     * Display a listing of active products with filtering and sorting.
+     */
     public function index(Request $request)
     {
         $category = $request->query('category');
         $search = $request->query('search');
+        $sortBy = $request->query('sort_by', 'latest'); // default to latest
         $page = $request->query('page', 1);
 
-        $cacheKey = "products_index_v1_cat_{$category}_search_{$search}_page_{$page}";
+        $cacheKey = "products_index_v1_cat_{$category}_search_{$search}_sort_{$sortBy}_page_{$page}";
 
-        $products = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $search) {
-            $query = Product::where('is_active', true);
+        $products = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $search, $sortBy) {
+            $query = Product::query()
+                ->where('is_active', true)
+                ->with('category');
 
+            // 1. Filtering by Category
             if ($category) {
                 $query->where('category_id', $category);
             }
 
+            // 2. Search (Name, Description, Brand)
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhere('brand', 'like', "%{$search}%");
                 });
             }
 
-            return $query->paginate(20)->through(fn($product) => $this->formatProduct($product));
+            // 3. Sorting
+            switch ($sortBy) {
+                case 'price_low':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_high':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'best_seller':
+                    $query->orderBy('total_sales', 'desc');
+                    break;
+                case 'rating':
+                    $query->orderBy('average_rating', 'desc');
+                    break;
+                case 'latest':
+                default:
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
+
+            return $query->paginate(20);
         });
 
         return response()->json([
             'status' => 'success',
-            'data' => $products
+            'data' => ProductResource::collection($products)->response()->getData(true)
         ]);
     }
 
+    /**
+     * Display the specified product.
+     */
     public function show(string $id)
     {
-        $product = Product::findOrFail($id);
+        try {
+            $product = Product::with('category')
+                ->where('is_active', true)
+                ->findOrFail($id);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $this->formatProduct($product)
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'data' => new ProductResource($product)
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Product not found or inactive'
+            ], 404);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An unexpected error occurred'
+            ], 500);
+        }
     }
-
-    // Write methods removed for Public Controller
-
-    protected function formatProduct(Product $product): array
-    {
-        return [
-            'id' => (string) $product->id,
-            'name' => (string) $product->name,
-            'price' => (double) $product->price,
-            'discountPrice' => $product->discount_price ? (double) $product->discount_price : null,
-            'imageUrls' => is_array($product->image_urls) ? $product->image_urls : [],
-            'description' => (string) $product->description,
-            'categoryId' => (string) $product->category_id,
-            'stockQuantity' => (int) $product->stock_quantity,
-            'averageRating' => (double) $product->average_rating,
-            'reviewCount' => (int) $product->review_count,
-            'brand' => (string) $product->brand,
-            'servingSize' => (string) $product->serving_size,
-            'servingsPerContainer' => (int) $product->servings_per_container,
-            'isActive' => (bool) $product->is_active,
-
-            'sku' => (string) $product->sku,
-            'tags' => is_array($product->tags) ? $product->tags : [],
-            'weight' => (double) $product->weight,
-            'size' => is_array($product->size) ? $product->size : [],
-            'flavors' => is_array($product->flavors) ? $product->flavors : [],
-            'nutrition_facts' => $product->nutrition_facts,
-            'ingredients' => is_array($product->ingredients) ? $product->ingredients : [],
-            'featured' => (bool) $product->featured,
-            'new_arrival' => (bool) $product->new_arrival,
-            'best_seller' => (bool) $product->best_seller,
-            'total_sales' => (int) $product->total_sales,
-
-            'createdAt' => $product->created_at ? $product->created_at->toIso8601String() : null,
-            'updatedAt' => $product->updated_at ? $product->updated_at->toIso8601String() : null,
-        ];
-    }
-
-    // Cache clearing logic moved to Admin Controller
 }
+

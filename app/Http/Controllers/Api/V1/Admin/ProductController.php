@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
 
+use App\Http\Resources\Api\V1\ProductResource;
+
 class ProductController extends Controller
 {
     /**
@@ -20,14 +22,15 @@ class ProductController extends Controller
 
         if ($search) {
             $query->where('name', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('brand', 'like', "%{$search}%");
         }
 
-        $products = $query->paginate(20)->through(fn($product) => $this->formatProduct($product));
+        $products = $query->with('category')->paginate(20);
 
         return response()->json([
             'status' => 'success',
-            'data' => $products
+            'data' => ProductResource::collection($products)->response()->getData(true)
         ]);
     }
 
@@ -54,11 +57,10 @@ class ProductController extends Controller
         ]);
 
         $product = Product::create($validated);
-        // $this->clearProductCache(); // Cache clearing should ideally happen via observer or service
-
+        
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatProduct($product)
+            'data' => new ProductResource($product->load('category'))
         ], 201);
     }
 
@@ -67,10 +69,10 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('category')->findOrFail($id);
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatProduct($product)
+            'data' => new ProductResource($product)
         ]);
     }
 
@@ -98,11 +100,10 @@ class ProductController extends Controller
         ]);
 
         $product->update($validated);
-        // $this->clearProductCache();
 
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatProduct($product)
+            'data' => new ProductResource($product->load('category'))
         ]);
     }
 
@@ -113,46 +114,10 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         $product->delete();
-        // $this->clearProductCache();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Product deleted successfully'
         ], 204);
-    }
-
-    protected function formatProduct(Product $product): array
-    {
-        return [
-            'id' => (string) $product->id,
-            'name' => (string) $product->name,
-            'price' => (double) $product->price,
-            'discountPrice' => $product->discount_price ? (double) $product->discount_price : null,
-            'imageUrls' => is_array($product->image_urls) ? $product->image_urls : [],
-            'description' => (string) $product->description,
-            'categoryId' => (string) $product->category_id,
-            'stockQuantity' => (int) $product->stock_quantity,
-            'averageRating' => (double) $product->average_rating,
-            'reviewCount' => (int) $product->review_count,
-            'brand' => (string) $product->brand,
-            'servingSize' => (string) $product->serving_size,
-            'servingsPerContainer' => (int) $product->servings_per_container,
-            'isActive' => (bool) $product->is_active,
-
-            'sku' => (string) $product->sku,
-            'tags' => is_array($product->tags) ? $product->tags : [],
-            'weight' => (double) $product->weight,
-            'size' => is_array($product->size) ? $product->size : [],
-            'flavors' => is_array($product->flavors) ? $product->flavors : [],
-            'nutrition_facts' => $product->nutrition_facts,
-            'ingredients' => is_array($product->ingredients) ? $product->ingredients : [],
-            'featured' => (bool) $product->featured,
-            'new_arrival' => (bool) $product->new_arrival,
-            'best_seller' => (bool) $product->best_seller,
-            'total_sales' => (int) $product->total_sales,
-
-            'createdAt' => $product->created_at ? $product->created_at->toIso8601String() : null,
-            'updatedAt' => $product->updated_at ? $product->updated_at->toIso8601String() : null,
-        ];
     }
 }
