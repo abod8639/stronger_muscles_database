@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -26,12 +28,7 @@ class AuthController extends Controller
     return response()->json([
       'status' => 'success',
       'token' => $token,
-      'user' => [
-        'id' => $user->id,
-        'name' => $user->name,
-        'email' => $user->email,
-        'role' => $user->role,
-      ],
+      'user' => new UserResource($user),
     ]);
   }
 
@@ -44,15 +41,7 @@ class AuthController extends Controller
 
     return response()->json([
       'status' => 'success',
-      'user' => [
-        'id' => $user->id,
-        'name' => $user->name,
-        'email' => $user->email,
-        'phone' => $user->phone_number,
-        'photo_url' => $user->photo_url,
-        'created_at' => $user->created_at->toIso8601String(),
-        'addresses' => $user->addresses,
-      ],
+      'user' => new UserResource($user->load('addresses')),
     ]);
   }
 
@@ -63,64 +52,49 @@ class AuthController extends Controller
   {
     $user = $request->user();
 
-    $validator = Validator::make($request->all(), [
-      'name' => 'nullable|string',
+    $validated = $request->validate([
+      'name' => 'nullable|string|max:255',
       'email' => 'nullable|email|unique:users,email,' . $user->id,
       'phone' => 'nullable|string',
       'photo_url' => 'nullable|string',
       'addresses' => 'nullable|array',
+      'addresses.*.id' => 'nullable|string',
       'addresses.*.label' => 'nullable|string',
       'addresses.*.full_name' => 'nullable|string',
       'addresses.*.phone' => 'nullable|string',
-      'addresses.*.street' => 'required|string',
-      'addresses.*.city' => 'required|string',
+      'addresses.*.street' => 'nullable|string',
+      'addresses.*.city' => 'nullable|string',
       'addresses.*.state' => 'nullable|string',
       'addresses.*.country' => 'nullable|string',
     ]);
 
-    if ($validator->fails()) {
-      return response()->json(['errors' => $validator->errors()], 422);
-    }
+    return DB::transaction(function () use ($user, $request) {
+      $user->fill(array_filter([
+        'name' => $request->name,
+        'email' => $request->email,
+        'phone_number' => $request->phone,
+        'photo_url' => $request->photo_url,
+      ]));
 
-    if ($request->has('name')) {
-      $user->name = $request->name;
-    }
-    if ($request->has('email')) {
-      $user->email = $request->email;
-    }
-    if ($request->has('phone')) {
-      $user->phone_number = $request->phone;
-    }
-    if ($request->has('photo_url')) {
-      $user->photo_url = $request->photo_url;
-    }
-
-    $user->save();
-
-    // Handle addresses if provided
-    if ($request->has('addresses')) {
-      // Delete existing addresses
-      $user->addresses()->delete();
-
-      // Create new addresses
-      foreach ($request->input('addresses') as $addressData) {
-        // Map frontend fields to DB columns if necessary, or pass directly if they match
-        $user->addresses()->create($addressData);
+      if ($user->isDirty()) {
+        $user->save();
       }
-    }
 
-    return response()->json([
-      'status' => 'success',
-      'user' => [
-        'id' => $user->id,
-        'name' => $user->name,
-        'email' => $user->email,
-        'phone' => $user->phone_number,
-        'photo_url' => $user->photo_url,
-        'created_at' => $user->created_at->toIso8601String(),
-        'addresses' => $user->addresses,
-      ],
-    ]);
+      if ($request->has('addresses')) {
+        foreach ($request->addresses as $addressData) {
+          $user->addresses()->updateOrCreate(
+            ['id' => $addressData['id'] ?? (string) Str::uuid()],
+            $addressData
+          );
+        }
+      }
+
+      return response()->json([
+        'status' => 'success',
+        'message' => 'Profile updated successfully',
+        'user' => new UserResource($user->load('addresses')),
+      ]);
+    });
   }
 
   /**
@@ -128,14 +102,10 @@ class AuthController extends Controller
    */
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+    $validated = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
 
         $user = User::where('email', $request->email)->first();
 
@@ -148,13 +118,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'photo_url' => $user->photo_url,
-                'created_at' => $user->created_at->toIso8601String(),
-            ],
+      'user' => new UserResource($user),
         ]);
     }
 
@@ -163,15 +127,11 @@ class AuthController extends Controller
    */
   public function register(Request $request)
   {
-    $validator = Validator::make($request->all(), [
+    $validated = $request->validate([
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:6',
     ]);
-
-    if ($validator->fails()) {
-      return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
-    }
 
     $user = User::create([
       'name' => $request->name,
@@ -187,13 +147,7 @@ class AuthController extends Controller
       'status' => 'success',
       'message' => 'User registered successfully',
       'token' => $token,
-      'user' => [
-        'id' => $user->id,
-        'name' => $user->name,
-        'email' => $user->email,
-        'role' => $user->role,
-        'created_at' => $user->created_at->toIso8601String(),
-      ],
+      'user' => new UserResource($user),
     ]);
   }
 
@@ -202,48 +156,50 @@ class AuthController extends Controller
    */
     public function googleSignIn(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+    $validated = $request->validate([
             'email' => 'required|email',
             'name' => 'required|string',
             'photo_url' => 'nullable|string',
+      'google_id' => 'nullable|string', // Optional if you want to store/validate it later
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $user = User::where('email', $request->email)->first();
-
-        if (! $user) {
-            $user = User::create([
+    $user = User::firstOrCreate(
+      ['email' => $request->email],
+      [
                 'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make(Str::random(16)), // Dummy password for Google users
+        'password' => Hash::make(Str::random(16)), // Dummy password
                 'photo_url' => $request->photo_url,
                 'email_verified_at' => now(),
-            ]);
-        } else {
-            // Update photo if changed/provided
-            if ($request->has('photo_url') && $user->photo_url !== $request->photo_url) {
-                $user->update(['photo_url' => $request->photo_url]);
-            }
+        'role' => 'user', // Default role
+        'is_active' => true,
+      ]
+    );
+
+    // Update photo if changed and provided
+    if ($request->has('photo_url') && $user->photo_url !== $request->photo_url) {
+      $user->update(['photo_url' => $request->photo_url]);
         }
 
-        // Generate real Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'status' => 'success',
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'photo_url' => $user->photo_url,
-                'token' => $token,
-                'created_at' => $user->created_at->toIso8601String(),
-            ],
+      'user' => new UserResource($user),
+    ]);
+  }
+
+  /**
+   * Handle user logout.
+   */
+  public function logout(Request $request)
+  {
+    $request->user()->currentAccessToken()->delete();
+
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Logged out successfully',
         ]);
     }
 }

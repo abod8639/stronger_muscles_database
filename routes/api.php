@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::get('/test-login', [AuthController::class, 'testLogin']);
         Route::middleware('auth:sanctum')->post('/update-profile', [AuthController::class, 'updateProfile']);
+        Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
     });
 
     // Helper for authenticated user
