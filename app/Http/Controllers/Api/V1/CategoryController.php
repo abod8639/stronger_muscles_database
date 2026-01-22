@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Http\Resources\Api\V1\CategoryResource;
-use Illuminate\Http\Request;
+use App\Models\Category;
 
 class CategoryController extends Controller
 {
@@ -22,7 +21,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => CategoryResource::collection($categories)
+            'data' => CategoryResource::collection($categories),
         ]);
     }
 
@@ -38,7 +37,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => new CategoryResource($category)
+            'data' => new CategoryResource($category),
         ]);
     }
 }
