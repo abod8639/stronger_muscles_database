@@ -57,6 +57,7 @@ class Product extends Model
         'meta_title',
         'meta_description',
         'slug',
+        'is_background_white'
 
     ];
 
@@ -84,6 +85,7 @@ class Product extends Model
             'shipping_weight' => 'decimal:2',
             'expiry_date' => 'date',
             'size' => 'array',
+            'is_background_white' => 'boolean',
         ];
     }
 

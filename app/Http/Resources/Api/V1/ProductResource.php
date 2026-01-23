@@ -29,7 +29,7 @@ class ProductResource extends JsonResource
             'brand' => (string) $this->brand,
             'servingSize' => (string) $this->serving_size,
             'servingsPerContainer' => (int) $this->servings_per_container,
-            'isActive' => (bool) $this->is_active,
+            'is_active' => (bool) $this->is_active,
             'sku' => (string) $this->sku,
             'tags' => $this->tags ?? [],
             'weight' => (double) $this->weight,
@@ -43,6 +43,7 @@ class ProductResource extends JsonResource
             'totalSales' => (int) $this->total_sales,
             'createdAt' => $this->created_at ? $this->created_at->toIso8601String() : null,
             'updatedAt' => $this->updated_at ? $this->updated_at->toIso8601String() : null,
+            'is_background_white' => (bool) $this->is_background_white,
         ];
     }
 }
