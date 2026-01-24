@@ -48,6 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login' => 'datetime',
         ];
     }
 
@@ -73,5 +74,21 @@ class User extends Authenticatable
     public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    /**
+     * Accessor for total spent.
+     */
+    public function getTotalSpentAttribute(): float
+    {
+        return (float) $this->orders()->where('status', 'delivered')->sum('total_amount');
+    }
+
+    /**
+     * Accessor for orders count.
+     */
+    public function getOrdersCountAttribute(): int
+    {
+        return (int) $this->orders()->count();
     }
 }

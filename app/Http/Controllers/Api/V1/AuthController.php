@@ -99,10 +99,21 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+    // Check if user exists
+    if (!$user) {
       return response()->json([
         'status' => 'error',
-        'message' => 'Invalid credentials'
+        'message' => 'لا يوجد حساب مسجل بهذا البريد الإلكتروني',
+        'error_type' => 'email_not_found'
+      ], 404);
+    }
+
+    // Check if password is correct
+    if (!Hash::check($request->password, $user->password)) {
+      return response()->json([
+        'status' => 'error',
+        'message' => 'كلمة المرور غير صحيحة',
+        'error_type' => 'invalid_password'
       ], 401);
         }
 
@@ -128,12 +139,20 @@ class AuthController extends Controller
       'name' => 'required|string|max:255',
       'email' => 'required|string|email|max:255|unique:users',
       'password' => 'required|string|min:6',
+    ], [
+      'name.required' => 'الاسم مطلوب',
+      'name.max' => 'الاسم طويل جداً',
+      'email.required' => 'البريد الإلكتروني مطلوب',
+      'email.email' => 'البريد الإلكتروني غير صحيح',
+      'email.unique' => 'هذا البريد الإلكتروني مسجل مسبقاً',
+      'password.required' => 'كلمة المرور مطلوبة',
+      'password.min' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
     ]);
 
     $user = User::create([
       'name' => $validated['name'],
       'email' => $validated['email'],
-      'password' => Hash::make($validated['password']),
+      'password' => $validated['password'], // Rely on 'hashed' cast in User model
       'role' => 'user',
       'is_active' => true,
       'email_verified_at' => now(), // Auto-verify for now
@@ -146,7 +165,7 @@ class AuthController extends Controller
 
     return response()->json([
       'status' => 'success',
-      'message' => 'User registered successfully',
+      'message' => 'تم إنشاء الحساب بنجاح',
       'token' => $token,
       'user' => new UserResource($user->load('addresses')),
     ], 201);
@@ -168,7 +187,7 @@ class AuthController extends Controller
       ['email' => $request->email],
       [
                 'name' => $request->name,
-        'password' => Hash::make(Str::random(16)), // Dummy password
+        'password' => Str::random(16), // Rely on 'hashed' cast
                 'photo_url' => $request->photo_url,
                 'email_verified_at' => now(),
         'role' => 'user', // Default role
@@ -187,7 +206,7 @@ class AuthController extends Controller
             'status' => 'success',
             'access_token' => $token,
             'token_type' => 'Bearer',
-      'user' => new UserResource($user),
+      'user' => new UserResource($user->load('addresses')),
     ]);
   }
 
