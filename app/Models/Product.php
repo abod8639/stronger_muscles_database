@@ -86,6 +86,7 @@ class Product extends Model
             'expiry_date' => 'date',
             'size' => 'array',
             'is_background_white' => 'boolean',
+            'ingredients' => 'array',
         ];
     }
 

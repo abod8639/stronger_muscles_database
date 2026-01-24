@@ -40,6 +40,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/profile', [AuthController::class, 'getProfile']); // Assuming typical profile fetch if needed, or use /user
         Route::apiResource('cart', CartController::class);
         Route::apiResource('orders', CustomerOrderController::class)->only(['index', 'show', 'store']);
+
+        // Address Management
+        Route::apiResource('addresses', \App\Http\Controllers\Api\V1\Customer\AddressController::class);
+        Route::post('/addresses/{id}/set-default', [\App\Http\Controllers\Api\V1\Customer\AddressController::class, 'setDefault']);
     });
 
     // --- 3. Public Routes (Shop/Guest) ---
@@ -54,8 +58,13 @@ Route::prefix('v1')->group(function () {
     // --- Auth Routes ---
     Route::prefix('auth')->group(function () {
         Route::post('/google-signin', [AuthController::class, 'googleSignIn']);
-        Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/register', [AuthController::class, 'register']);
+
+        // Rate-limited auth endpoints (5 attempts per minute)
+        Route::middleware('throttle:5,1')->group(function () {
+            Route::post('/login', [AuthController::class, 'login']);
+            Route::post('/register', [AuthController::class, 'register']);
+        });
+
         Route::get('/test-login', [AuthController::class, 'testLogin']);
         Route::middleware('auth:sanctum')->post('/update-profile', [AuthController::class, 'updateProfile']);
         Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);

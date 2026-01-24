@@ -55,46 +55,36 @@ class AuthController extends Controller
     $validated = $request->validate([
       'name' => 'nullable|string|max:255',
       'email' => 'nullable|email|unique:users,email,' . $user->id,
-      'phone' => 'nullable|string',
-      'photo_url' => 'nullable|string',
-      'addresses' => 'nullable|array',
-      'addresses.*.id' => 'nullable|string',
-      'addresses.*.label' => 'nullable|string',
-      'addresses.*.full_name' => 'nullable|string',
-      'addresses.*.phone' => 'nullable|string',
-      'addresses.*.street' => 'nullable|string',
-      'addresses.*.city' => 'nullable|string',
-      'addresses.*.state' => 'nullable|string',
-      'addresses.*.country' => 'nullable|string',
+      'phone' => 'nullable|string|max:20',
+      'photo_url' => 'nullable|string|max:500',
+      'preferred_language' => 'nullable|string|in:ar,en',
+      'notifications_enabled' => 'nullable|boolean',
     ]);
 
-    return DB::transaction(function () use ($user, $request) {
-      $user->fill(array_filter([
-        'name' => $request->name,
-        'email' => $request->email,
-        'phone_number' => $request->phone,
-        'photo_url' => $request->photo_url,
-      ]));
+    // Only update provided fields
+    $updateData = [];
+    if (isset($validated['name']))
+      $updateData['name'] = $validated['name'];
+    if (isset($validated['email']))
+      $updateData['email'] = $validated['email'];
+    if (isset($validated['phone']))
+      $updateData['phone_number'] = $validated['phone'];
+    if (isset($validated['photo_url']))
+      $updateData['photo_url'] = $validated['photo_url'];
+    if (isset($validated['preferred_language']))
+      $updateData['preferred_language'] = $validated['preferred_language'];
+    if (isset($validated['notifications_enabled']))
+      $updateData['notifications_enabled'] = $validated['notifications_enabled'];
 
-      if ($user->isDirty()) {
-        $user->save();
-      }
+    if (!empty($updateData)) {
+      $user->update($updateData);
+    }
 
-      if ($request->has('addresses')) {
-        foreach ($request->addresses as $addressData) {
-          $user->addresses()->updateOrCreate(
-            ['id' => $addressData['id'] ?? (string) Str::uuid()],
-            $addressData
-          );
-        }
-      }
-
-      return response()->json([
-        'status' => 'success',
-        'message' => 'Profile updated successfully',
-        'user' => new UserResource($user->load('addresses')),
-      ]);
-    });
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Profile updated successfully',
+      'user' => new UserResource($user->fresh()->load('addresses')),
+    ]);
   }
 
   /**
@@ -104,21 +94,28 @@ class AuthController extends Controller
     {
     $validated = $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+      'password' => 'required|string',
         ]);
 
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Invalid credentials'
+      ], 401);
         }
 
+    // Update last login timestamp
+    $user->update(['last_login' => now()]);
+
+    // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'status' => 'success',
             'token' => $token,
-      'user' => new UserResource($user),
+      'user' => new UserResource($user->load('addresses')),
         ]);
     }
 
@@ -134,12 +131,16 @@ class AuthController extends Controller
     ]);
 
     $user = User::create([
-      'name' => $request->name,
-      'email' => $request->email,
-      'password' => Hash::make($request->password),
+      'name' => $validated['name'],
+      'email' => $validated['email'],
+      'password' => Hash::make($validated['password']),
       'role' => 'user',
       'is_active' => true,
+      'email_verified_at' => now(), // Auto-verify for now
     ]);
+
+    // Update last login
+    $user->update(['last_login' => now()]);
 
     $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -147,8 +148,8 @@ class AuthController extends Controller
       'status' => 'success',
       'message' => 'User registered successfully',
       'token' => $token,
-      'user' => new UserResource($user),
-    ]);
+      'user' => new UserResource($user->load('addresses')),
+    ], 201);
   }
 
   /**
