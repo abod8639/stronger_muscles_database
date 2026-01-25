@@ -54,6 +54,7 @@ class ProductController extends Controller
             'is_active' => 'nullable|boolean',
             'flavors' => 'nullable|array',
             'size' => 'nullable|array',
+            'is_background_white' => 'nullable|boolean',
         ]);
 
         $product = Product::create($validated);
@@ -97,6 +98,7 @@ class ProductController extends Controller
             'is_active' => 'nullable|boolean',
             'flavors' => 'nullable|array',
             'size' => 'nullable|array',
+            'is_background_white' => 'nullable|boolean',
         ]);
 
         $product->update($validated);

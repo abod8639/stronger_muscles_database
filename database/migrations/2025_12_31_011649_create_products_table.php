@@ -29,6 +29,7 @@ return new class extends Migration
             $table->timestamps();
             $table->text('flavors')->nullable();
             $table->text('size')->nullable();
+            $table->boolean('is_background_white')->nullable();
         });
     }
 

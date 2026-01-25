@@ -69,6 +69,7 @@ class ProductFactory extends Factory
             'is_active' => fake()->boolean(90),
             'flavors' => [fake()->randomElement(['نكهة الشوكولاتة', 'نكهة الفانيليا', 'نكهة الفراولة', 'بدون نكهة'])],
             'size' => [fake()->randomElement(['M', 'L', 'XL', 'XXL'])],
+            'is_background_white' => fake()->boolean(50),
         ];
     }
 }

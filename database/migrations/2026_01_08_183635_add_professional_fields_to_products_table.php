@@ -43,9 +43,6 @@ return new class extends Migration {
             $table->string('meta_title')->nullable()->after('country_of_origin');
             $table->text('meta_description')->nullable()->after('meta_title');
             $table->string('slug')->nullable()->unique()->after('meta_description');
-
-            //flavor
-            $table->json('flavor')->nullable()->after('slug');
         });
     }
 
@@ -77,7 +74,6 @@ return new class extends Migration {
                 'meta_title',
                 'meta_description',
                 'slug',
-                'flavor',
             ]);
         });
     }
