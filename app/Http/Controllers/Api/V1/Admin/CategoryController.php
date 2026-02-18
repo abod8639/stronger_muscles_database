@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Category;
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
@@ -13,11 +13,11 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::all()->map(fn($category) => $this->formatCategory($category));
+        $categories = Category::all()->map(fn ($category) => $this->formatCategory($category));
 
         return response()->json([
             'status' => 'success',
-            'data' => $categories
+            'data' => $categories,
         ]);
     }
 
@@ -28,19 +28,24 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'id' => 'required|string|unique:categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'name' => 'required|array',
+            'name.ar' => 'required|string|max:255',
+            'name.en' => 'nullable|string|max:255',
+            'description' => 'nullable|array',
             'image_url' => 'nullable|string',
             'sort_order' => 'nullable|integer',
             'is_active' => 'nullable|boolean',
             'icon' => 'nullable|string',
+            'parent_id' => 'nullable|exists:categories,id',
         ]);
 
         $category = Category::create($validated);
 
+        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
+
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatCategory($category)
+            'data' => $this->formatCategory($category),
         ], 201);
     }
 
@@ -50,9 +55,10 @@ class CategoryController extends Controller
     public function show(string $id)
     {
         $category = Category::findOrFail($id);
+
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatCategory($category)
+            'data' => $this->formatCategory($category),
         ]);
     }
 
@@ -64,19 +70,24 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
+            'name' => 'nullable|array',
+            'name.ar' => 'nullable|string|max:255',
+            'name.en' => 'nullable|string|max:255',
+            'description' => 'nullable|array',
             'image_url' => 'nullable|string',
             'sort_order' => 'nullable|integer',
             'is_active' => 'nullable|boolean',
             'icon' => 'nullable|string',
+            'parent_id' => 'nullable|exists:categories,id',
         ]);
 
         $category->update($validated);
 
+        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
+
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatCategory($category)
+            'data' => $this->formatCategory($category),
         ]);
     }
 
@@ -91,11 +102,13 @@ class CategoryController extends Controller
         if ($category->products()->count() > 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete category with associated products'
+                'message' => 'Cannot delete category with associated products',
             ], 422);
         }
 
         $category->delete();
+
+        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
 
         return response()->json(null, 204);
     }
@@ -104,13 +117,15 @@ class CategoryController extends Controller
     {
         return [
             'id' => $category->id,
-            'name' => $category->name,
-            'description' => $category->description,
+            'name' => $category->name, // Object {ar: ..., en: ...}
+            'description' => $category->description, // Object
             'imageUrl' => $category->image_url,
             'sortOrder' => (int) $category->sort_order,
             'isActive' => (bool) $category->is_active,
             'createdAt' => $category->created_at ? $category->created_at->toIso8601String() : null,
             'icon' => $category->icon,
+            'parentId' => $category->parent_id,
+            'children' => $category->children->map(fn ($child) => $this->formatCategory($child)),
         ];
     }
 }

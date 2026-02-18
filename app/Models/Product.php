@@ -29,14 +29,17 @@ class Product extends Model
         'serving_size',
         'servings_per_container',
         'is_active',
-        // Basic Info
+        'is_background_white',
+        // Attributes
         'sku',
         'tags',
         'weight',
         'size',
         'flavors',
+        'product_sizes',
         // Nutrition
         'nutrition_facts',
+        'ingredients',
         // Marketing
         'featured',
         'new_arrival',
@@ -47,7 +50,6 @@ class Product extends Model
         'shipping_weight',
         'dimensions',
         // Additional
-        'ingredients',
         'usage_instructions',
         'warnings',
         'expiry_date',
@@ -57,13 +59,25 @@ class Product extends Model
         'meta_title',
         'meta_description',
         'slug',
-        'is_background_white'
-
     ];
+
+    /**
+     * Computed: whether this product has active variants.
+     */
+    public function getHasVariantsAttribute(): bool
+    {
+        if ($this->relationLoaded('variants')) {
+            return $this->variants->isNotEmpty();
+        }
+
+        return $this->variants()->exists();
+    }
 
     protected function casts(): array
     {
         return [
+            'name' => 'array',
+            'description' => 'array',
             'price' => 'decimal:2',
             'discount_price' => 'decimal:2',
             'stock_quantity' => 'integer',
@@ -87,6 +101,7 @@ class Product extends Model
             'size' => 'array',
             'is_background_white' => 'boolean',
             'ingredients' => 'array',
+            'product_sizes' => 'array',
         ];
     }
 
@@ -109,5 +124,10 @@ class Product extends Model
     public function cartItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(CartItem::class);
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
     }
 }

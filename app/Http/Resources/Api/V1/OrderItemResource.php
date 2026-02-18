@@ -19,9 +19,9 @@ class OrderItemResource extends JsonResource
             'order_id' => (string) $this->order_id,
             'product_id' => (string) $this->product_id,
             'product_name' => $this->product_name ?? 'Unknown Product',
-            'unit_price' => (double) $this->unit_price,
+            'unit_price' => (float) $this->unit_price,
             'quantity' => (int) $this->quantity,
-            'subtotal' => (double) $this->subtotal,
+            'subtotal' => (float) $this->subtotal,
             'image_url' => $this->image_url,
             'selectedFlavor' => $this->flavors[0] ?? null, // Assuming single flavor for now based on array cast logic
             'selectedSize' => $this->size[0] ?? null,

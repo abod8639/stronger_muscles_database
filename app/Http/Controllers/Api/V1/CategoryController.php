@@ -13,11 +13,13 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::query()
-            ->where('is_active', true)
-            ->withCount('products')
-            ->orderBy('sort_order', 'asc')
-            ->get();
+        $categories = \Illuminate\Support\Facades\Cache::remember('shop_categories_list', 600, function () {
+            return Category::query()
+                ->where('is_active', true)
+                ->withCount('products')
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        });
 
         return response()->json([
             'status' => 'success',

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Resources\Api\V1\OrderResource;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -42,7 +42,7 @@ class OrderController extends Controller
             'shippingCost' => 'required|numeric|min:0',
             'payment_method' => 'nullable|string',
             'address_id' => 'nullable|string',
-            'shipping_address' => 'nullable|string',
+            'shipping_address' => 'nullable|array',
             'notes' => 'nullable|string',
             'phone_number' => 'nullable|string',
             // 'discount' is removed from validation to prevent user input
@@ -113,7 +113,7 @@ class OrderController extends Controller
                     'payment_status' => 'pending',
                     'payment_method' => $request->payment_method ?? 'cash',
                     'address_id' => $request->address_id,
-                    'shipping_address_snapshot' => $request->shipping_address ?? '',
+                    'shipping_address_snapshot' => $request->shipping_address,
                     'subtotal' => $calculatedSubtotal,
                     'shipping_cost' => $shippingCost,
                     'discount' => $discount,
@@ -123,21 +123,22 @@ class OrderController extends Controller
                 ]);
 
                 // Optimize: Bulk Insert Items
-                if (!empty($orderItemsData)) {
+                if (! empty($orderItemsData)) {
                     OrderItem::insert($orderItemsData);
                 }
 
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Order placed successfully',
-                    'data' => new OrderResource($order->load('orderItems'))
+                    'data' => new OrderResource($order->load('orderItems')),
                 ], 201);
             });
         } catch (\Throwable $e) {
-            Log::error('Order creation failed: ' . $e->getMessage());
+            Log::error('Order creation failed: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -152,6 +153,3 @@ class OrderController extends Controller
         return new OrderResource($order);
     }
 }
-
-
-

@@ -2,155 +2,98 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ImageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImageUploadController extends Controller
 {
+    public function __construct(protected ImageService $imageService) {}
 
-    public function uploadProductImage(Request $request)
+    /**
+     * Upload a product image.
+     *
+     * رفع صورة المنتج
+     */
+    public function uploadProductImage(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-        ]);
-
-        try {
-            $file = $validated['image'];
-            $folder = 'products';
-            $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
-            $saved = Storage::disk('public')->putFileAs($folder, $file, $fileName);
-
-            if (! $saved) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'فشل في حفظ الصورة',
-                ], 500);
-            }
-
-            $path = $folder.'/'.$fileName;
-            $url = Storage::disk('public')->url($path);
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'url' => $url,
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                ],
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'خطأ في رفع الصورة: '.$e->getMessage(),
-            ], 500);
-        }
+        return $this->handleImageUpload($request, 'products');
     }
 
     /**
+     * Upload a category image.
+     *
      * رفع صورة التصنيف
      */
-    public function uploadCategoryImage(Request $request)
+    public function uploadCategoryImage(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-        ]);
-
-        try {
-            $file = $validated['image'];
-            $folder = 'categories';
-            $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
-            $saved = Storage::disk('public')->putFileAs($folder, $file, $fileName);
-
-            if (! $saved) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'فشل في حفظ الصورة',
-                ], 500);
-            }
-
-            $path = $folder.'/'.$fileName;
-            $url = Storage::disk('public')->url($path);
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'url' => $url,
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                ],
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'خطأ في رفع الصورة: '.$e->getMessage(),
-            ], 500);
-        }
+        return $this->handleImageUpload($request, 'categories');
     }
 
     /**
+     * Upload a generic image.
+     *
      * رفع صورة عامة
      */
-    public function uploadImage(Request $request)
+    public function uploadImage(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-        ]);
-
-        try {
-            $file = $validated['image'];
-            $folder = 'images';
-            $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
-            $saved = Storage::disk('public')->putFileAs($folder, $file, $fileName);
-
-            if (! $saved) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'فشل في حفظ الصورة',
-                ], 500);
-            }
-
-            $path = $folder.'/'.$fileName;
-            $url = Storage::disk('public')->url($path);
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'url' => $url,
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                ],
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'خطأ في رفع الصورة: '.$e->getMessage(),
-            ], 500);
-        }
+        return $this->handleImageUpload($request, 'images');
     }
 
     /**
+     * Delete an image.
+     *
      * حذف صورة
      */
-    public function deleteImage(Request $request)
+    public function deleteImage(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'path' => 'required|string',
         ]);
 
         try {
-            if (Storage::disk('public')->exists($validated['path'])) {
-                Storage::disk('public')->delete($validated['path']);
-            }
+            $this->imageService->delete($validated['path']);
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'تم حذف الصورة بنجاح',
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'مسار الصورة غير صحيح',
+            ], 400);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'خطأ في حذف الصورة: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle image upload logic.
+     */
+    protected function handleImageUpload(Request $request, string $folder): JsonResponse
+    {
+        $validated = $request->validate($this->imageService->getValidationRules());
+
+        try {
+            $result = $this->imageService->upload($validated['image'], $folder);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $result,
+            ], 201);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'فشل في حفظ الصورة',
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'خطأ في رفع الصورة: '.$e->getMessage(),
             ], 500);
         }
     }

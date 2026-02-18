@@ -21,13 +21,16 @@ class Category extends Model
         'image_url',
         'sort_order',
         'is_active',
-        'icon'
-        
+        'icon',
+        'parent_id',
+
     ];
 
     protected function casts(): array
     {
         return [
+            'name' => 'array',
+            'description' => 'array',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
@@ -36,5 +39,15 @@ class Category extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
     }
 }
