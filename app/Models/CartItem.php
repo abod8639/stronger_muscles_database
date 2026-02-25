@@ -26,7 +26,7 @@ class CartItem extends Model
         'quantity',
         'added_at',
         'flavors',
-        'size'
+        'size',
     ];
 
     /**
@@ -74,5 +74,37 @@ class CartItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Scope: For a specific user
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope: With product data
+     */
+    public function scopeWithProductData($query)
+    {
+        return $query->with('product:id,name,price,discount_price,stock_quantity,image_urls');
+    }
+
+    /**
+     * Scope: Calculate total price
+     */
+    public function scopeWithTotalPrice($query)
+    {
+        return $query->selectRaw('*, (price * quantity) as total_price');
+    }
+
+    /**
+     * Accessor: Get calculated subtotal
+     */
+    public function getTotalPriceAttribute(): float
+    {
+        return (float) ($this->price * $this->quantity);
     }
 }

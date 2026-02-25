@@ -33,7 +33,7 @@ class CategoryFactory extends Factory
             'id' => fake()->uuid(),
             'name' => $category['name'],
             'description' => $category['description'],
-            'image_url' => 'https://picsum.photos/seed/' . fake()->uuid() . '/300/200',
+            'image_url' => 'https://picsum.photos/seed/'.fake()->uuid().'/300/200',
             'sort_order' => fake()->numberBetween(1, 100),
             'is_active' => fake()->boolean(95),
         ];

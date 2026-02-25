@@ -7,7 +7,6 @@ use App\Http\Resources\Api\V1\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -30,8 +29,6 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('Product Info Store Request:', $request->all());
-
         $validated = $request->validate([
             'id' => 'required|string|unique:products,id',
             'name' => 'required|array',
@@ -84,11 +81,6 @@ class ProductController extends Controller
             })->values()->toArray();
         }
 
-        // Ensure product_sizes is properly passed even if empty
-        if ($request->has('product_sizes')) {
-            $validated['product_sizes'] = $request->input('product_sizes') ?: [];
-        }
-
         $product = Product::create($validated);
 
         // Support both 'product_variants' and legacy 'variants'
@@ -136,8 +128,6 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
-        Log::info("Product Info Update Request for ID {$id}:", $request->all());
-
         $validated = $request->validate([
             'name' => 'nullable|array',
             'description' => 'nullable|array',
@@ -181,11 +171,6 @@ class ProductController extends Controller
 
                 return $img;
             })->values()->toArray();
-        }
-
-        // Ensure product_sizes is properly passed even if empty
-        if ($request->has('product_sizes')) {
-            $validated['product_sizes'] = $request->input('product_sizes') ?: [];
         }
 
         $product->update($validated);

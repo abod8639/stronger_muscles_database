@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\User;
-use App\Models\Product;
 use App\Models\Category;
-use Laravel\Sanctum\Sanctum;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 

@@ -22,13 +22,13 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => 'ORD-' . strtoupper(Str::random(8)),
+            'id' => 'ORD-'.strtoupper(Str::random(8)),
             'user_id' => User::factory(),
             'order_date' => now(),
             'status' => 'pending',
             'payment_status' => 'pending',
             'payment_method' => 'card',
-            'address_id' => 'addr-' . Str::random(5),
+            'address_id' => 'addr-'.Str::random(5),
             'shipping_address_snapshot' => [
                 'street' => fake()->streetAddress(),
                 'city' => fake()->city(),
@@ -40,7 +40,7 @@ class OrderFactory extends Factory
             'total_amount' => function (array $attributes) {
                 return $attributes['subtotal'] + $attributes['shipping_cost'] - $attributes['discount'];
             },
-            'tracking_number' => 'TRK' . strtoupper(Str::random(10)),
+            'tracking_number' => 'TRK'.strtoupper(Str::random(10)),
             'notes' => fake()->sentence(),
         ];
     }

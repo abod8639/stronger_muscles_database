@@ -11,9 +11,15 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::all()->map(fn ($category) => $this->formatCategory($category));
+        $query = Category::query();
+        
+        if ($request->boolean('tree')) {
+            $query->whereNull('parent_id');
+        }
+
+        $categories = $query->get()->map(fn ($category) => $this->formatCategory($category));
 
         return response()->json([
             'status' => 'success',
@@ -26,7 +32,23 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->all();
+        
+        if (!isset($data['id']) || empty($data['id'])) {
+            $nameEn = $request->input('name.en');
+            $nameAr = $request->input('name.ar');
+            $base = $nameEn ?: $nameAr;
+            $data['id'] = \Illuminate\Support\Str::slug($base);
+            
+            // Ensure uniqueness
+            $originalId = $data['id'];
+            $count = 1;
+            while (Category::where('id', $data['id'])->exists()) {
+                $data['id'] = $originalId . '-' . $count++;
+            }
+        }
+
+        $validated = validator($data, [
             'id' => 'required|string|unique:categories,id',
             'name' => 'required|array',
             'name.ar' => 'required|string|max:255',
@@ -37,11 +59,11 @@ class CategoryController extends Controller
             'is_active' => 'nullable|boolean',
             'icon' => 'nullable|string',
             'parent_id' => 'nullable|exists:categories,id',
-        ]);
+        ])->validate();
 
         $category = Category::create($validated);
 
-        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
+        $this->clearCaches();
 
         return response()->json([
             'status' => 'success',
@@ -83,7 +105,7 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
+        $this->clearCaches();
 
         return response()->json([
             'status' => 'success',
@@ -108,7 +130,7 @@ class CategoryController extends Controller
 
         $category->delete();
 
-        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
+        $this->clearCaches();
 
         return response()->json(null, 204);
     }
@@ -127,5 +149,13 @@ class CategoryController extends Controller
             'parentId' => $category->parent_id,
             'children' => $category->children->map(fn ($child) => $this->formatCategory($child)),
         ];
+    }
+
+    protected function clearCaches()
+    {
+        \Illuminate\Support\Facades\Cache::forget('categories:active:list');
+        \Illuminate\Support\Facades\Cache::forget('shop_categories_list');
+        \Illuminate\Support\Facades\Cache::forget('categories_list');
+        \Illuminate\Support\Facades\Cache::forget('categories_tree');
     }
 }

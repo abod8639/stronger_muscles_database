@@ -5,6 +5,7 @@ namespace Tests\Feature\Api\V1;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use function Pest\Laravel\getJson;
 
 uses(RefreshDatabase::class);

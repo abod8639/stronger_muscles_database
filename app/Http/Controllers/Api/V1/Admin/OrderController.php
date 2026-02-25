@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Order;
+use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
@@ -22,11 +22,11 @@ class OrderController extends Controller
             $query->where('status', $status);
         }
 
-        $orders = $query->paginate($limit)->through(fn($order) => $this->formatOrder($order));
+        $orders = $query->paginate($limit)->through(fn ($order) => $this->formatOrder($order));
 
         return response()->json([
             'status' => 'success',
-            'data' => $orders
+            'data' => $orders,
         ]);
     }
 
@@ -39,7 +39,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatOrder($order)
+            'data' => $this->formatOrder($order),
         ]);
     }
 
@@ -60,7 +60,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $this->formatOrder($order)
+            'data' => $this->formatOrder($order),
         ]);
     }
 
@@ -78,21 +78,21 @@ class OrderController extends Controller
             'payment_status' => $order->payment_status,
             'payment_method' => $order->payment_method,
             'address_id' => (string) $order->address_id,
-            'subtotal' => (double) $order->subtotal,
-            'shippingCost' => (double) $order->shipping_cost,
-            'discount' => (double) $order->discount,
-            'total_amount' => (double) $order->total_amount,
+            'subtotal' => (float) $order->subtotal,
+            'shippingCost' => (float) $order->shipping_cost,
+            'discount' => (float) $order->discount,
+            'total_amount' => (float) $order->total_amount,
             'tracking_number' => $order->tracking_number,
             'notes' => $order->notes,
             'shipping_address' => $order->shipping_address_snapshot,
-            'order_items' => $order->orderItems->map(fn($item) => [
+            'order_items' => $order->orderItems->map(fn ($item) => [
                 'id' => (string) $item->id,
                 'order_id' => (string) $item->order_id,
                 'product_id' => (string) $item->product_id,
                 'product_name' => $item->product_name ?? 'Unknown Product',
-                'unit_price' => (double) $item->unit_price,
+                'unit_price' => (float) $item->unit_price,
                 'quantity' => (int) $item->quantity,
-                'subtotal' => (double) $item->subtotal,
+                'subtotal' => (float) $item->subtotal,
                 'image_url' => $item->image_url,
                 'selectedFlavor' => $item->selected_flavor,
                 'selectedSize' => $item->selected_size,

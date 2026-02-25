@@ -23,7 +23,7 @@ class OrderItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => 'ITEM-' . strtoupper(Str::random(10)),
+            'id' => 'ITEM-'.strtoupper(Str::random(10)),
             'order_id' => Order::factory(),
             'product_id' => Product::factory(),
             'product_name' => fake()->words(3, true),

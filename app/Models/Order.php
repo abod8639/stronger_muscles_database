@@ -81,4 +81,64 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    /**
+     * Scope: Only completed orders
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed')->orWhere('status', 'delivered');
+    }
+
+    /**
+     * Scope: Pending orders
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Scope: Paid orders
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('payment_status', 'paid');
+    }
+
+    /**
+     * Scope: For a specific user
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope: With items and products data
+     */
+    public function scopeWithItems($query)
+    {
+        return $query->with('orderItems:id,order_id,product_id,product_name,unit_price,quantity,subtotal,image_url');
+    }
+
+    /**
+     * Scope: Recent orders first
+     */
+    public function scopeLatest($query)
+    {
+        return $query->orderBy('order_date', 'desc');
+    }
+
+    /**
+     * Accessor: Get order total items count
+     */
+    public function getTotalItemsCountAttribute(): int
+    {
+        if ($this->relationLoaded('orderItems')) {
+            return $this->orderItems->sum('quantity');
+        }
+
+        return (int) $this->orderItems()->sum('quantity');
+    }
 }

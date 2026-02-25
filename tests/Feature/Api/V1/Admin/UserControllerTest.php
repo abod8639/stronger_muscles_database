@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\User;
 use App\Models\Order;
-use Laravel\Sanctum\Sanctum;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
@@ -34,9 +34,9 @@ test('admin can retrieve users list with stats', function () {
                     'total_spent',
                     'created_at',
                     'orders_count',
-                    'addresses'
-                ]
-            ]
+                    'addresses',
+                ],
+            ],
         ]);
 
     // Check specific user stats

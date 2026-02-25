@@ -5,6 +5,7 @@ namespace Tests\Feature\Api\V1;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use function Pest\Laravel\getJson;
 
 uses(RefreshDatabase::class);
@@ -29,10 +30,10 @@ test('guest can list active products with pagination', function () {
                         'name',
                         'price',
                         'brand',
-                        'categoryName'
-                    ]
-                ]
-            ]
+                        'categoryName',
+                    ],
+                ],
+            ],
         ]);
 });
 
@@ -95,6 +96,6 @@ test('guest gets 404 for inactive or missing product', function () {
         ->assertStatus(404)
         ->assertJsonPath('status', 'error');
 
-    getJson("/api/v1/shop/products/non-existent")
+    getJson('/api/v1/shop/products/non-existent')
         ->assertStatus(404);
 });

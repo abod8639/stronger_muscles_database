@@ -23,7 +23,7 @@ class CartItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => 'CART-' . strtoupper(Str::random(10)),
+            'id' => 'CART-'.strtoupper(Str::random(10)),
             'user_id' => User::factory(),
             'product_id' => Product::factory(),
             'product_name' => fake()->words(3, true),

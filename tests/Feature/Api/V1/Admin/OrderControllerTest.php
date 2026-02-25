@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\User;
 use App\Models\Order;
-use Laravel\Sanctum\Sanctum;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
@@ -36,7 +36,7 @@ test('admin can view a specific order', function () {
     Sanctum::actingAs($admin);
     $order = Order::factory()->create();
 
-    $response = $this->getJson('/api/v1/admin/orders/' . $order->id);
+    $response = $this->getJson('/api/v1/admin/orders/'.$order->id);
 
     $response->assertStatus(200)
         ->assertJsonFragment(['id' => $order->id]);
@@ -47,8 +47,8 @@ test('admin can update order status', function () {
     Sanctum::actingAs($admin);
     $order = Order::factory()->create(['status' => 'pending']);
 
-    $response = $this->patchJson('/api/v1/admin/orders/' . $order->id, [
-        'status' => 'shipped'
+    $response = $this->patchJson('/api/v1/admin/orders/'.$order->id, [
+        'status' => 'shipped',
     ]);
 
     $response->assertStatus(200)

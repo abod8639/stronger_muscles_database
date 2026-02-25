@@ -50,13 +50,13 @@ class ProductFactory extends Factory
 
         return [
             'id' => fake()->uuid(),
-            'name' => fake()->randomElement($productNames) . ' - ' . fake()->randomElement(['نكهة الشوكولاتة', 'نكهة الفانيليا', 'نكهة الفراولة', 'بدون نكهة']),
+            'name' => fake()->randomElement($productNames).' - '.fake()->randomElement(['نكهة الشوكولاتة', 'نكهة الفانيليا', 'نكهة الفراولة', 'بدون نكهة']),
             'price' => $price,
             'discount_price' => $hasDiscount ? $price * fake()->randomFloat(2, 0.7, 0.9) : null,
             'image_urls' => [
-                'https://picsum.photos/seed/' . fake()->uuid() . '/400/400',
-                'https://picsum.photos/seed/' . fake()->uuid() . '/400/400',
-                'https://picsum.photos/seed/' . fake()->uuid() . '/400/400',
+                'https://picsum.photos/seed/'.fake()->uuid().'/400/400',
+                'https://picsum.photos/seed/'.fake()->uuid().'/400/400',
+                'https://picsum.photos/seed/'.fake()->uuid().'/400/400',
             ],
             'description' => fake()->paragraph(5),
             'stock_quantity' => fake()->numberBetween(0, 200),

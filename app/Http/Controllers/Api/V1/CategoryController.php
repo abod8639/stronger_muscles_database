@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\CategoryResource;
 use App\Models\Category;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -13,11 +14,11 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = \Illuminate\Support\Facades\Cache::remember('shop_categories_list', 600, function () {
-            return Category::query()
-                ->where('is_active', true)
-                ->withCount('products')
-                ->orderBy('sort_order', 'asc')
+        $categories = Cache::remember('categories:active:list', now()->addHours(2), function () {
+            return Category::active()
+                ->ordered()
+                ->withProductCount()
+                ->forListView()
                 ->get();
         });
 
@@ -32,10 +33,11 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        $category = Category::query()
-            ->where('is_active', true)
-            ->withCount('products')
-            ->findOrFail($id);
+        $category = Cache::remember("category:{$id}", now()->addHours(2), function () use ($id) {
+            return Category::active()
+                ->withProductCount()
+                ->findOrFail($id);
+        });
 
         return response()->json([
             'status' => 'success',

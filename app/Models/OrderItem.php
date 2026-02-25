@@ -26,7 +26,7 @@ class OrderItem extends Model
         'subtotal',
         'image_url',
         'flavors',
-        'size'
+        'size',
     ];
 
     /**
@@ -73,5 +73,37 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Scope: For a specific order
+     */
+    public function scopeForOrder($query, $orderId)
+    {
+        return $query->where('order_id', $orderId);
+    }
+
+    /**
+     * Scope: With product data
+     */
+    public function scopeWithProductData($query)
+    {
+        return $query->with('product:id,name,brand,sku');
+    }
+
+    /**
+     * Accessor: Get total line price
+     */
+    public function getLineTotalAttribute(): float
+    {
+        return (float) ($this->unit_price * $this->quantity);
+    }
+
+    /**
+     * Accessor: Get discount amount (if any)
+     */
+    public function getDiscountAmountAttribute(): float
+    {
+        return max(0, (float) ($this->subtotal - ($this->unit_price * $this->quantity)));
     }
 }

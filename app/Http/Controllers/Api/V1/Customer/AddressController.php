@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Address;
 use App\Http\Resources\AddressResource;
+use App\Models\Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -59,7 +59,7 @@ class AddressController extends Controller
 
             // Update user's default_address_id if this is the default
             if ($address->is_default) {
-                $user->update(['default_address_id' => (string)$address->id]);
+                $user->update(['default_address_id' => (string) $address->id]);
             }
 
             return response()->json([
@@ -115,8 +115,8 @@ class AddressController extends Controller
 
             // Update user's default_address_id if this is the default
             if ($address->is_default) {
-                $user->update(['default_address_id' => (string)$address->id]);
-            } elseif ($user->default_address_id == $id && !$address->is_default) {
+                $user->update(['default_address_id' => (string) $address->id]);
+            } elseif ($user->default_address_id == $id && ! $address->is_default) {
                 // If this was the default and is being unset, clear user's default
                 $user->update(['default_address_id' => null]);
             }
@@ -168,7 +168,7 @@ class AddressController extends Controller
             $address->update(['is_default' => true]);
 
             // Update user's default_address_id
-            $user->update(['default_address_id' => (string)$address->id]);
+            $user->update(['default_address_id' => (string) $address->id]);
 
             return response()->json([
                 'status' => 'success',

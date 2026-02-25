@@ -25,7 +25,7 @@ class UserResource extends JsonResource
             'notifications_enabled' => (bool) ($this->notifications_enabled ?? true),
             'is_active' => (bool) ($this->is_active ?? true),
             'role' => $this->role ?? 'user',
-            'total_spent' => (double) ($this->total_spent ?? 0),
+            'total_spent' => (float) ($this->total_spent ?? 0),
             'orders_count' => (int) ($this->orders_count ?? 0),
             'addresses' => AddressResource::collection($this->whenLoaded('addresses')),
             'created_at' => $this->created_at?->toIso8601String(),
