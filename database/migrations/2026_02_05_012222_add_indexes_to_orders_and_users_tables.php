@@ -49,8 +49,18 @@ return new class extends Migration
     protected function getTableIndexes(string $table): array
     {
         $conn = Schema::getConnection();
-        $results = $conn->select("PRAGMA index_list($table)");
+        $driver = $conn->getDriverName();
 
-        return array_column($results, 'name');
+        if ($driver === 'sqlite') {
+            $results = $conn->select("PRAGMA index_list($table)");
+            return array_column($results, 'name');
+        }
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            $results = $conn->select("SHOW INDEX FROM $table");
+            return array_column($results, 'Key_name');
+        }
+
+        return [];
     }
 };
