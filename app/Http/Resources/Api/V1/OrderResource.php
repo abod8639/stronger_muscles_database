@@ -17,7 +17,7 @@ class OrderResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'user_id' => (string) $this->user_id,
-            'order_date' => $this->order_date ? $this->order_date->toIso8601String() : $this->created_at->toIso8601String(),
+            'order_date' => $this->order_date ? $this->order_date->toIso8601String() : ($this->created_at ? $this->created_at->toIso8601String() : null),
             'status' => $this->status,
             'payment_status' => $this->payment_status,
             'payment_method' => $this->payment_method,
@@ -31,8 +31,8 @@ class OrderResource extends JsonResource
             'notes' => $this->notes,
             'shipping_address' => $this->shipping_address_snapshot,
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
-            'createdAt' => $this->created_at->toIso8601String(),
-            'updatedAt' => $this->updated_at->toIso8601String(),
+            'createdAt' => $this->created_at?->toIso8601String(),
+            'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

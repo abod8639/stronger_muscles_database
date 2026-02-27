@@ -56,6 +56,7 @@ class OrderItem extends Model
             'subtotal' => 'decimal:2',
             'flavors' => 'array',
             'size' => 'array',
+            'product_name' => 'array',
         ];
     }
 

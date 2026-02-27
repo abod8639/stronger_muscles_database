@@ -22,7 +22,7 @@ class OrderController extends Controller
             $query->where('status', $status);
         }
 
-        $orders = $query->paginate($limit)->through(fn ($order) => $this->formatOrder($order));
+        $orders = $query->paginate($limit)->through(fn($order) => $this->formatOrder($order));
 
         return response()->json([
             'status' => 'success',
@@ -73,7 +73,7 @@ class OrderController extends Controller
                 'name' => $order->user->name,
                 'email' => $order->user->email,
             ] : null,
-            'order_date' => $order->order_date ? $order->order_date->toIso8601String() : $order->created_at->toIso8601String(),
+            'order_date' => $order->order_date ? $order->order_date->toIso8601String() : ($order->created_at ? $order->created_at->toIso8601String() : null),
             'status' => $order->status,
             'payment_status' => $order->payment_status,
             'payment_method' => $order->payment_method,
@@ -85,20 +85,24 @@ class OrderController extends Controller
             'tracking_number' => $order->tracking_number,
             'notes' => $order->notes,
             'shipping_address' => $order->shipping_address_snapshot,
-            'order_items' => $order->orderItems->map(fn ($item) => [
+            'order_items' => $order->orderItems->map(fn($item) => [
                 'id' => (string) $item->id,
                 'order_id' => (string) $item->order_id,
                 'product_id' => (string) $item->product_id,
-                'product_name' => $item->product_name ?? 'Unknown Product',
+                'product_name' => is_array($item->product_name)
+                    ? ($item->product_name['ar'] ?? $item->product_name['en'] ?? array_values($item->product_name)[0] ?? 'Unknown Product')
+                    : ($item->product_name ?? 'Unknown Product'),
                 'unit_price' => (float) $item->unit_price,
                 'quantity' => (int) $item->quantity,
                 'subtotal' => (float) $item->subtotal,
                 'image_url' => $item->image_url,
-                'selectedFlavor' => $item->selected_flavor,
-                'selectedSize' => $item->selected_size,
+                'selectedFlavor' => is_array($item->flavors) ? ($item->flavors[0] ?? null) : null,
+                'selectedSize' => is_array($item->size) ? ($item->size[0] ?? null) : null,
+                'selected_flavor' => is_array($item->flavors) ? ($item->flavors[0] ?? null) : null,
+                'selected_size' => is_array($item->size) ? ($item->size[0] ?? null) : null,
             ]),
-            'createdAt' => $order->created_at->toIso8601String(),
-            'updatedAt' => $order->updated_at->toIso8601String(),
+            'createdAt' => $order->created_at?->toIso8601String(),
+            'updatedAt' => $order->updated_at?->toIso8601String(),
         ];
     }
 }
