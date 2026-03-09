@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
@@ -16,11 +17,14 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // --- 1. Admin Routes (Dashboard) ---
-    // Temporarily protected only by isAdmin (which we bypassed)
-    Route::middleware(['isAdmin'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:admin-api'])->prefix('admin')->group(function () {
         Route::apiResource('products', AdminProductController::class);
         Route::apiResource('categories', AdminCategoryController::class);
         Route::apiResource('users', AdminUserController::class)->only(['index']);
+
+        // Admin Auth actions
+        Route::get('/profile', [AdminAuthController::class, 'getProfile']);
+        Route::post('/logout', [AdminAuthController::class, 'logout']);
 
         // Orders management
         Route::get('/orders', [AdminOrderController::class, 'index']);
@@ -33,6 +37,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/upload/image', [ImageUploadController::class, 'uploadImage']);
         Route::post('/upload/delete', [ImageUploadController::class, 'deleteImage']);
     });
+
+    // Public Admin Login
+    Route::post('/admin/login', [AdminAuthController::class, 'login']);
 
     // --- 2. Customer Routes (App) ---
     // Protected by auth

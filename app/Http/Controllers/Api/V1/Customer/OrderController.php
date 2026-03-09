@@ -17,10 +17,10 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $limit = $request->query('limit', 20);
+        $limit = $request->query('limit');
 
         // Optimized query with eager loading and column selection
-        $orders = $request->user()
+        $query = $request->user()
             ->orders()
             ->select([
                 'id', 
@@ -35,8 +35,13 @@ class OrderController extends Controller
                 'total_amount',
             ])
             ->withItems()
-            ->latest()
-            ->paginate($limit);
+            ->latest();
+
+        if ($limit) {
+            $orders = $query->take((int)$limit)->get();
+        } else {
+            $orders = $query->get();
+        }
 
         return OrderResource::collection($orders)->additional([
             'status' => 'success',
