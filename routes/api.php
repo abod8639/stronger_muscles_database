@@ -14,6 +14,9 @@ use App\Http\Controllers\ImageUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Api\V1\Admin\PromoController as AdminPromoController;
+use App\Http\Controllers\Api\V1\Customer\PromoController as CustomerPromoController;
+
 Route::prefix('v1')->group(function () {
 
     // --- 1. Admin Routes (Dashboard) ---
@@ -21,6 +24,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('products', AdminProductController::class);
         Route::apiResource('categories', AdminCategoryController::class);
         Route::apiResource('users', AdminUserController::class)->only(['index']);
+        Route::apiResource('promos', AdminPromoController::class);
 
         // Admin Auth actions
         Route::get('/profile', [AdminAuthController::class, 'getProfile']);
@@ -34,6 +38,7 @@ Route::prefix('v1')->group(function () {
         // Uploads
         Route::post('/upload/product-image', [ImageUploadController::class, 'uploadProductImage']);
         Route::post('/upload/category-image', [ImageUploadController::class, 'uploadCategoryImage']);
+        Route::post('/upload/promo-image', [ImageUploadController::class, 'uploadImage']);
         Route::post('/upload/image', [ImageUploadController::class, 'uploadImage']);
         Route::post('/upload/delete', [ImageUploadController::class, 'deleteImage']);
     });
@@ -56,6 +61,7 @@ Route::prefix('v1')->group(function () {
     // --- 3. Public Routes (Shop/Guest) ---
     // Read-only access for everyone
     Route::prefix('shop')->group(function () {
+        Route::get('/promos', [CustomerPromoController::class, 'index']);
         Route::get('/products', [ProductController::class, 'index']);
         Route::get('/products/{id}', [ProductController::class, 'show']);
         Route::get('/categories', [CategoryController::class, 'index']);

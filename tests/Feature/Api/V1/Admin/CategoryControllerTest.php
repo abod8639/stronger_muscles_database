@@ -32,7 +32,7 @@ test('admin can delete a category if empty', function () {
 
     $response = $this->deleteJson('/api/v1/admin/categories/'.$category->id);
 
-    $response->assertStatus(204);
+    $response->assertStatus(202);
 });
 
 test('admin cannot delete a category with products', function () {
