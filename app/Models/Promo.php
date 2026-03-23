@@ -12,6 +12,8 @@ class Promo extends Model
         'button_text',
         'image_url',
         'background_color',
+        'target_type',
+        'target_id',
         'target_url',
         'is_active',
     ];

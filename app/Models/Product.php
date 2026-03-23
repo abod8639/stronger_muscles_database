@@ -22,6 +22,7 @@ class Product extends Model
         'image_urls',
         'description',
         'category_id',
+        'brand_id',
         'stock_quantity',
         'average_rating',
         'review_count',
@@ -110,6 +111,11 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
     /**
      * Get the order items for the product.
      */
@@ -194,7 +200,10 @@ class Product extends Model
     {
         return $query->where(function ($q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
-                ->orWhere('brand', 'like', "%{$term}%")
+                ->orWhere('brand', 'like', "%{$term}%") // legacy
+                ->orWhereHas('brand', function($bq) use ($term) {
+                    $bq->where('name', 'like', "%{$term}%");
+                })
                 ->orWhere('description', 'like', "%{$term}%");
         });
     }

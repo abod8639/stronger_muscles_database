@@ -28,6 +28,8 @@ class PromoController extends Controller
             'button_text' => 'nullable|array',
             'image_url' => 'required|string',
             'background_color' => 'required|string',
+            'target_type' => 'nullable|string|in:none,product,brand',
+            'target_id' => 'nullable|string',
             'target_url' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -62,6 +64,8 @@ class PromoController extends Controller
             'button_text' => 'nullable|array',
             'image_url' => 'sometimes|string',
             'background_color' => 'sometimes|string',
+            'target_type' => 'nullable|string|in:none,product,brand',
+            'target_id' => 'nullable|string',
             'target_url' => 'nullable|string',
             'is_active' => 'boolean',
         ]);

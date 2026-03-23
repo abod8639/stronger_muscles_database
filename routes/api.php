@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('categories', AdminCategoryController::class);
         Route::apiResource('users', AdminUserController::class)->only(['index']);
         Route::apiResource('promos', AdminPromoController::class);
+        Route::apiResource('brands', \App\Http\Controllers\Api\V1\Admin\BrandController::class);
 
         // Admin Auth actions
         Route::get('/profile', [AdminAuthController::class, 'getProfile']);
