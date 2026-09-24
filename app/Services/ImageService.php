@@ -14,6 +14,13 @@ class ImageService
 
     protected const MAX_FILE_SIZE = 5120; // 5MB in KB
 
+    protected string $disk;
+
+    public function __construct()
+    {
+        $this->disk = config('filesystems.upload_disk', 'public');
+    }
+
     /**
      * Upload an image to the specified folder.
      *
@@ -25,8 +32,8 @@ class ImageService
         $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
         $path = $folder.'/'.$fileName;
 
-        // Store file on public disk
-        $saved = Storage::disk('public')->put($path, $file->get());
+        // Store file on configured disk
+        $saved = Storage::disk($this->disk)->put($path, $file->get());
 
         if (! $saved) {
             throw new \RuntimeException('Failed to save image to storage');
@@ -70,8 +77,8 @@ class ImageService
             throw new \InvalidArgumentException('Invalid image path');
         }
 
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->delete($path);
+        if (Storage::disk($this->disk)->exists($path)) {
+            return Storage::disk($this->disk)->delete($path);
         }
 
         return false;
@@ -101,7 +108,7 @@ class ImageService
      */
     public function getImageUrl(string $path): string
     {
-        return config('app.url').'/storage/'.$path;
+        return Storage::disk($this->disk)->url($path);
     }
 
     /**
@@ -109,7 +116,7 @@ class ImageService
      */
     public function exists(string $path): bool
     {
-        return Storage::disk('public')->exists($path);
+        return Storage::disk($this->disk)->exists($path);
     }
 
     /**
