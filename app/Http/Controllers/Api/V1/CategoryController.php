@@ -4,23 +4,20 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\CategoryResource;
-use App\Models\Category;
-use Illuminate\Support\Facades\Cache;
+use App\Services\CategoryService;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        protected CategoryService $categoryService
+    ) {}
+
     /**
      * Display a listing of active categories.
      */
     public function index()
     {
-        $categories = Cache::remember('categories:active:list', now()->addHours(2), function () {
-            return Category::active()
-                ->ordered()
-                ->forListView()
-                ->withProductCount()
-                ->get();
-        });
+        $categories = $this->categoryService->getActiveCategories();
 
         return response()->json([
             'status' => 'success',
@@ -33,11 +30,7 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        $category = Cache::remember("category:{$id}", now()->addHours(2), function () use ($id) {
-            return Category::active()
-                ->withProductCount()
-                ->findOrFail($id);
-        });
+        $category = $this->categoryService->getActiveCategory($id);
 
         return response()->json([
             'status' => 'success',
