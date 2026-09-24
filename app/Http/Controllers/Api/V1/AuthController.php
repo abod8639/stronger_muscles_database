@@ -117,12 +117,9 @@ class AuthController extends Controller
     /**
      * Handle user login.
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $user = User::where('email', $request->email)->first();
 
@@ -160,21 +157,9 @@ class AuthController extends Controller
     /**
      * Handle user registration.
      */
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ], [
-            'name.required' => 'الاسم مطلوب',
-            'name.max' => 'الاسم طويل جداً',
-            'email.required' => 'البريد الإلكتروني مطلوب',
-            'email.email' => 'البريد الإلكتروني غير صحيح',
-            'email.unique' => 'هذا البريد الإلكتروني مسجل مسبقاً',
-            'password.required' => 'كلمة المرور مطلوبة',
-            'password.min' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
             'name' => $validated['name'],
@@ -201,14 +186,9 @@ class AuthController extends Controller
     /**
      * Handle Google Sign-In.
      */
-    public function googleSignIn(Request $request)
+    public function googleSignIn(GoogleSignInRequest $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'name' => 'required|string',
-            'photo_url' => 'nullable|string',
-            'google_id' => 'nullable|string', // Optional if you want to store/validate it later
-        ]);
+        $validated = $request->validated();
 
         $user = User::firstOrCreate(
             ['email' => $request->email],
