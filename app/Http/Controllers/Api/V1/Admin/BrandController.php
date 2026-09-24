@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Brand\StoreBrandRequest;
+use App\Http\Requests\Admin\Brand\UpdateBrandRequest;
 use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -25,16 +27,9 @@ class BrandController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreBrandRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|array',
-            'name.ar' => 'required|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-            'image_url' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-            'slug' => 'nullable|string|unique:brands,slug',
-        ]);
+        $validated = $request->validated();
 
         if (empty($validated['slug'])) {
             $base = $validated['name']['en'] ?: $validated['name']['ar'];
@@ -67,18 +62,11 @@ class BrandController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateBrandRequest $request, string $id)
     {
         $brand = Brand::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'nullable|array',
-            'name.ar' => 'nullable|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-            'image_url' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-            'slug' => 'nullable|string|unique:brands,slug,' . $brand->id,
-        ]);
+        $validated = $request->validated();
 
         $brand->update($validated);
 
