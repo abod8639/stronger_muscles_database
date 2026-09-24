@@ -108,7 +108,13 @@ class ImageService
      */
     public function getImageUrl(string $path): string
     {
-        return Storage::disk($this->disk)->url($path);
+        $url = Storage::disk($this->disk)->url($path);
+
+        if (str_starts_with($url, '/')) {
+            return rtrim(config('app.url'), '/').$url;
+        }
+
+        return $url;
     }
 
     /**
