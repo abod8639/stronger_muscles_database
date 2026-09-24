@@ -6,10 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\Order\StoreOrderRequest;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -25,22 +23,22 @@ class OrderController extends Controller
         $query = $request->user()
             ->orders()
             ->select([
-                'id', 
-                'user_id', 
-                'order_date', 
-                'status', 
+                'id',
+                'user_id',
+                'order_date',
+                'status',
                 'payment_status',
-                'payment_method', 
-                'subtotal', 
-                'shipping_cost', 
-                'discount', 
+                'payment_method',
+                'subtotal',
+                'shipping_cost',
+                'discount',
                 'total_amount',
             ])
             ->withItems()
             ->latest();
 
         if ($limit) {
-            $orders = $query->take((int)$limit)->get();
+            $orders = $query->take((int) $limit)->get();
         } else {
             $orders = $query->get();
         }
