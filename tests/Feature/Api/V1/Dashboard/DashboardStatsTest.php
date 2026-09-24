@@ -27,9 +27,9 @@ test('dashboard users stats returns correct data structure', function () {
         'quantity' => 2,
     ]);
 
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = \App\Models\Admin::factory()->create();
 
-    $response = $this->actingAs($admin, 'sanctum')->getJson('/api/v1/dashboard/users-stats');
+    $response = $this->actingAs($admin, 'admin-api')->getJson('/api/v1/admin/users');
 
     $response->assertStatus(200)
         ->assertJsonStructure([
