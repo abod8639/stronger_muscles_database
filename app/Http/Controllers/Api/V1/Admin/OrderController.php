@@ -49,13 +49,9 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id, \App\Services\OrderService $orderService)
+    public function update(UpdateOrderRequest $request, string $id, OrderService $orderService)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
-            'payment_status' => 'nullable|string',
-            'tracking_number' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $order = $orderService->updateOrderStatus(
             $id,
@@ -73,7 +69,7 @@ class OrderController extends Controller
     /**
      * Update the order status specifically.
      */
-    public function updateStatus(Request $request, string $id, \App\Services\OrderService $orderService)
+    public function updateStatus(UpdateOrderStatusRequest $request, string $id, OrderService $orderService)
     {
         return $this->update($request, $id, $orderService);
     }
