@@ -25,6 +25,7 @@ class ProductResource extends JsonResource
                 'id' => (string) $this->category->id,
                 'name' => $this->category->name,
             ]),
+            'categoryName' => $this->whenLoaded('category', fn () => is_array($this->category->name) ? ($this->category->name['en'] ?? $this->category->name['ar'] ?? '') : $this->category->name),
 
             // Images: support both stored-as-string and stored-as-object
             'imageUrls' => collect($this->image_urls ?? [])->map(fn ($img) => [
