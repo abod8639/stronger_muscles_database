@@ -5,7 +5,10 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+
+uses(RefreshDatabase::class);
 
 describe('Admin RBAC and Alerts', function () {
     test('super admin can access users endpoint and delete products', function () {
