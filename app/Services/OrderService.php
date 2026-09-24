@@ -5,17 +5,16 @@ namespace App\Services;
 use App\Models\Address;
 use App\Models\Product;
 use App\Repositories\OrderRepository;
+use App\Services\Notification\PushNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class OrderService
 {
-    protected $orderRepository;
-
-    public function __construct(OrderRepository $orderRepository)
-    {
-        $this->orderRepository = $orderRepository;
-    }
+    public function __construct(
+        protected OrderRepository $orderRepository,
+        protected PushNotificationService $notificationService
+    ) {}
 
     public function processCheckout($user, array $data)
     {
