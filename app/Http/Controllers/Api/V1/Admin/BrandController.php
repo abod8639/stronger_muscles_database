@@ -6,17 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Brand\StoreBrandRequest;
 use App\Http\Requests\Admin\Brand\UpdateBrandRequest;
 use App\Models\Brand;
+use App\Services\BrandService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class BrandController extends Controller
 {
+    public function __construct(
+        protected BrandService $brandService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $brands = Brand::orderBy('created_at', 'desc')->get()->map(fn ($brand) => $this->formatBrand($brand));
+        $brands = $this->brandService->getAllBrands()->map(fn ($brand) => $this->formatBrand($brand));
 
         return response()->json([
             'status' => 'success',
@@ -31,14 +35,7 @@ class BrandController extends Controller
     {
         $validated = $request->validated();
 
-        if (empty($validated['slug'])) {
-            $base = $validated['name']['en'] ?: $validated['name']['ar'];
-            $validated['slug'] = Str::slug($base).'-'.Str::random(5);
-        }
-
-        $brand = Brand::create($validated);
-
-        $this->clearCaches();
+        $brand = $this->brandService->createBrand($validated);
 
         return response()->json([
             'status' => 'success',
@@ -51,7 +48,7 @@ class BrandController extends Controller
      */
     public function show(string $id)
     {
-        $brand = Brand::findOrFail($id);
+        $brand = $this->brandService->getBrand($id);
 
         return response()->json([
             'status' => 'success',
@@ -64,13 +61,9 @@ class BrandController extends Controller
      */
     public function update(UpdateBrandRequest $request, string $id)
     {
-        $brand = Brand::findOrFail($id);
-
         $validated = $request->validated();
 
-        $brand->update($validated);
-
-        $this->clearCaches();
+        $brand = $this->brandService->updateBrand($id, $validated);
 
         return response()->json([
             'status' => 'success',
@@ -83,20 +76,16 @@ class BrandController extends Controller
      */
     public function destroy(string $id)
     {
-        $brand = Brand::findOrFail($id);
+        try {
+            $this->brandService->deleteBrand($id);
 
-        if ($brand->products()->count() > 0) {
+            return response()->json(null, 204);
+        } catch (\DomainException $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete brand with associated products',
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $brand->delete();
-
-        $this->clearCaches();
-
-        return response()->json(null, 204);
     }
 
     protected function formatBrand(Brand $brand): array
