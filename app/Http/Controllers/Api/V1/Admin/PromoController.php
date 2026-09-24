@@ -5,16 +5,20 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Promo\StorePromoRequest;
 use App\Http\Requests\Admin\Promo\UpdatePromoRequest;
-use App\Models\Promo;
+use App\Services\PromoService;
 
 class PromoController extends Controller
 {
+    public function __construct(
+        protected PromoService $promoService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $promos = Promo::latest()->get();
+        $promos = $this->promoService->getAllPromos();
 
         return response()->json($promos);
     }
@@ -26,7 +30,7 @@ class PromoController extends Controller
     {
         $validated = $request->validated();
 
-        $promo = Promo::create($validated);
+        $promo = $this->promoService->createPromo($validated);
 
         return response()->json([
             'message' => 'تم إنشاء الإعلان بنجاح',
@@ -39,7 +43,7 @@ class PromoController extends Controller
      */
     public function show(string $id)
     {
-        $promo = Promo::findOrFail($id);
+        $promo = $this->promoService->getPromo($id);
 
         return response()->json($promo);
     }
@@ -49,11 +53,9 @@ class PromoController extends Controller
      */
     public function update(UpdatePromoRequest $request, string $id)
     {
-        $promo = Promo::findOrFail($id);
-
         $validated = $request->validated();
 
-        $promo->update($validated);
+        $promo = $this->promoService->updatePromo($id, $validated);
 
         return response()->json([
             'message' => 'تم تحديث الإعلان بنجاح',
@@ -66,8 +68,7 @@ class PromoController extends Controller
      */
     public function destroy(string $id)
     {
-        $promo = Promo::findOrFail($id);
-        $promo->delete();
+        $this->promoService->deletePromo($id);
 
         return response()->json([
             'message' => 'تم حذف الإعلان بنجاح',
