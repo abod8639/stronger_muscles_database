@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Product;
 use App\Models\Address;
+use App\Models\Product;
 use App\Repositories\OrderRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -35,7 +35,7 @@ class OrderService
 
             // Check all items before processing
             foreach ($data['items'] as $item) {
-                if (!isset($products[$item['product_id']])) {
+                if (! isset($products[$item['product_id']])) {
                     throw new \Exception("Product not found: {$item['product_id']}");
                 }
 
@@ -143,7 +143,35 @@ class OrderService
         $basePrice = ($product->discount_price > 0 && $product->discount_price < $product->price)
             ? (float) $product->discount_price
             : (float) $product->price;
-            
+
         return $basePrice;
+    }
+
+    public function updateOrderStatus(string $orderId, string $status, ?string $paymentStatus = null, ?string $trackingNumber = null): \App\Models\Order
+    {
+        return DB::transaction(function () use ($orderId, $status, $paymentStatus, $trackingNumber) {
+            $order = $this->orderRepository->findOrFail($orderId);
+            $oldStatus = $order->status;
+
+            // If changing to cancelled from an active order, restore product stock
+            if ($status === 'cancelled' && $oldStatus !== 'cancelled') {
+                foreach ($order->orderItems as $item) {
+                    if ($item->product_id) {
+                        Product::where('id', $item->product_id)->increment('stock_quantity', $item->quantity);
+                    }
+                }
+            }
+
+            // If was cancelled and now re-opened, re-deduct stock
+            if ($oldStatus === 'cancelled' && $status !== 'cancelled') {
+                foreach ($order->orderItems as $item) {
+                    if ($item->product_id) {
+                        Product::where('id', $item->product_id)->decrement('stock_quantity', $item->quantity);
+                    }
+                }
+            }
+
+            return $this->orderRepository->updateOrderStatus($order, $status, $paymentStatus, $trackingNumber);
+        });
     }
 }
