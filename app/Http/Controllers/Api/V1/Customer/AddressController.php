@@ -32,21 +32,9 @@ class AddressController extends Controller
     /**
      * Store a newly created address.
      */
-    public function store(Request $request)
+    public function store(StoreAddressRequest $request)
     {
-        $validated = $request->validate([
-            'label' => 'nullable|string|max:50',
-            'full_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'street' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
-            'is_default' => 'nullable|boolean',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-        ]);
+        $validated = $request->validated();
 
         return DB::transaction(function () use ($request, $validated) {
             $user = $request->user();
@@ -88,21 +76,9 @@ class AddressController extends Controller
     /**
      * Update the specified address.
      */
-    public function update(Request $request, int $id)
+    public function update(UpdateAddressRequest $request, int $id)
     {
-        $validated = $request->validate([
-            'label' => 'nullable|string|max:50',
-            'full_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'street' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
-            'is_default' => 'nullable|boolean',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-        ]);
+        $validated = $request->validated();
 
         return DB::transaction(function () use ($request, $id, $validated) {
             $user = $request->user();
