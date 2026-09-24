@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\ProductResource;
-use App\Models\Product;
+use App\Services\ProductService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use OpenApi\Attributes as OA;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        protected ProductService $productService
+    ) {}
+
     #[OA\Get(
         path: '/api/v1/products',
         operationId: 'getProductsList',
@@ -30,41 +33,14 @@ class ProductController extends Controller
     )]
     public function index(Request $request)
     {
-        $category = $request->query('category');
-        $search = $request->query('search');
-        $sortBy = $request->query('sort_by', 'latest');
-        $page = $request->query('page', 1);
+        $filters = [
+            'category' => $request->query('category'),
+            'search' => $request->query('search'),
+            'sort_by' => $request->query('sort_by', 'latest'),
+        ];
+        $page = (int) $request->query('page', 1);
 
-        // More fine tuned cache key
-        $cacheKey = 'products:list:'.md5("cat={$category}&search={$search}&sort={$sortBy}&page={$page}");
-
-        $products = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($category, $search, $sortBy) {
-            $query = Product::active()
-                ->forListView()
-                ->withCategoryData();
-
-            // Filtering by Category
-            if ($category) {
-                $query->category($category);
-            }
-
-            // Search
-            if ($search) {
-                $query->search($search);
-            }
-
-            // Sorting
-            $query = match ($sortBy) {
-                'price_low' => $query->sortByPrice('asc'),
-                'price_high' => $query->sortByPrice('desc'),
-                'best_seller' => $query->sortByPopularity(),
-                'rating' => $query->sortByRating(),
-                'new' => $query->newArrivals()->latest('created_at'),
-                default => $query->orderBy('created_at', 'desc'),
-            };
-
-            return $query->paginate(20);
-        });
+        $products = $this->productService->getPublicProducts($filters, 20, $page);
 
         return response()->json([
             'status' => 'success',
@@ -89,14 +65,7 @@ class ProductController extends Controller
     public function show(string $id)
     {
         try {
-            // Cache individual product for 60 minutes
-            $product = Cache::remember("product:{$id}", now()->addHours(1), function () use ($id) {
-                return Product::active()
-                    ->forDetailView()
-                    ->withCategoryData()
-                    ->with('variants:id,product_id,sku,price,discount_price,stock_quantity,attributes')
-                    ->findOrFail($id);
-            });
+            $product = $this->productService->getProductDetails($id);
 
             return response()->json([
                 'status' => 'success',
