@@ -59,18 +59,11 @@ class AuthController extends Controller
     /**
      * Handle user profile update.
      */
-    public function updateProfile(Request $request)
+    public function updateProfile(UpdateProfileRequest $request)
     {
         $user = $request->user();
 
-        $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:users,email,'.$user->id,
-            'phone' => 'nullable|string|max:20',
-            'photo_url' => 'nullable|string|max:500',
-            'preferred_language' => 'nullable|string|in:ar,en',
-            'notifications_enabled' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         // Only update provided fields
         $updateData = [];
