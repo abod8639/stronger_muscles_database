@@ -6,7 +6,6 @@ use App\Http\Requests\Upload\DeleteImageRequest;
 use App\Http\Requests\Upload\UploadImageRequest;
 use App\Services\ImageService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ImageUploadController extends Controller
 {
