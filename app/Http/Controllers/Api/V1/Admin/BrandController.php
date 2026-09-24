@@ -33,7 +33,7 @@ class BrandController extends Controller
 
         if (empty($validated['slug'])) {
             $base = $validated['name']['en'] ?: $validated['name']['ar'];
-            $validated['slug'] = Str::slug($base) . '-' . Str::random(5);
+            $validated['slug'] = Str::slug($base).'-'.Str::random(5);
         }
 
         $brand = Brand::create($validated);
