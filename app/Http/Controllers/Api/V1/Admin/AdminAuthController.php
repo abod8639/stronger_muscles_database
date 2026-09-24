@@ -3,19 +3,17 @@
 namespace App\Http\Controllers\Api\V1\Admin;
  
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Auth\AdminLoginRequest;
+use App\Http\Resources\UserResource;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Http\Resources\UserResource;
 
 class AdminAuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(AdminLoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $admin = Admin::where('email', $request->email)->first();
 
