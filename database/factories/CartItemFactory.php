@@ -31,8 +31,8 @@ class CartItemFactory extends Factory
             'image_urls' => [fake()->imageUrl()],
             'quantity' => fake()->numberBetween(1, 5),
             'added_at' => now(),
-            'flavors' => [fake()->flavor()],
-            'size' => fake()->size(),
+            'flavors' => [fake()->randomElement(['Chocolate', 'Vanilla', 'Strawberry'])],
+            'size' => fake()->randomElement(['Small', 'Medium', 'Large', '1kg', '2kg']),
         ];
     }
 }
