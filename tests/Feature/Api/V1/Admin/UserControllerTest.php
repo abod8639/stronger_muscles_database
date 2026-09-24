@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -8,8 +9,8 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 test('admin can retrieve users list with stats', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
 
     $user1 = User::factory()->create();
     Order::factory()->count(2)->create(['user_id' => $user1->id, 'total_amount' => 100]); // Total 200
@@ -47,11 +48,11 @@ test('admin can retrieve users list with stats', function () {
 
 test('non-admin cannot retrieve users list', function () {
     $user = User::factory()->create(['role' => 'customer']);
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['*'], 'sanctum');
 
     $response = $this->getJson('/api/v1/admin/users');
 
-    $response->assertStatus(403);
+    $response->assertStatus(401);
 });
 
 test('guest cannot retrieve users list', function () {
