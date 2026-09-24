@@ -27,4 +27,25 @@ class AdminFactory extends Factory
             'remember_token' => Str::random(10),
         ];
     }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => \App\Models\Admin::ROLE_SUPER_ADMIN,
+        ]);
+    }
+
+    public function inventoryManager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => \App\Models\Admin::ROLE_INVENTORY_MANAGER,
+        ]);
+    }
+
+    public function customerSupport(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => \App\Models\Admin::ROLE_CUSTOMER_SUPPORT,
+        ]);
+    }
 }
