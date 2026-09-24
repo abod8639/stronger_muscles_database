@@ -30,50 +30,11 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
         Log::info('Product Info Store Request:', $request->all());
 
-        $validated = $request->validate([
-            'id' => 'required|string|unique:products,id',
-            'name' => 'required|array',
-            'name.ar' => 'required|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-            'description' => 'required|array',
-            'description.ar' => 'nullable|string',
-            'description.en' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0',
-            'image_urls' => 'nullable|array',
-            'category_id' => 'required|exists:categories,id',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'brand' => 'nullable|string|max:255',
-            'is_active' => 'nullable|boolean',
-            'is_background_white' => 'nullable|boolean',
-            'serving_size' => 'nullable|string',
-            'servings_per_container' => 'nullable|integer|min:0',
-            'flavors' => 'nullable|array',
-            'product_sizes' => 'nullable|array',
-            'product_sizes.*.size' => 'required|string',
-            'product_sizes.*.price' => 'required|numeric|min:0',
-            'product_sizes.*.discount_price' => 'nullable|numeric|min:0',
-            'size' => 'nullable|array',
-            // Support both 'variants' (legacy) and 'product_variants' (new)
-            'product_variants' => 'nullable|array',
-            'product_variants.*.sku' => 'required|string|distinct',
-            'product_variants.*.price' => 'required|numeric|min:0',
-            'product_variants.*.discount_price' => 'nullable|numeric|min:0',
-            'product_variants.*.stock_quantity' => 'required|integer|min:0',
-            'product_variants.*.attributes' => 'required|array',
-            'product_variants.*.is_active' => 'nullable|boolean',
-            // Legacy key support
-            'variants' => 'nullable|array',
-            'variants.*.sku' => 'required_with:variants|string|distinct',
-            'variants.*.price' => 'required_with:variants|numeric|min:0',
-            'variants.*.discount_price' => 'nullable|numeric|min:0',
-            'variants.*.stock_quantity' => 'required_with:variants|integer|min:0',
-            'variants.*.attributes' => 'required_with:variants|array',
-        ]);
+        $validated = $request->validated();
 
         // Normalize image_urls: accept strings or objects
         if (isset($validated['image_urls'])) {
