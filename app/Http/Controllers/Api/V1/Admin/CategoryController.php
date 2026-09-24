@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Category\StoreCategoryRequest;
+use App\Http\Requests\Admin\Category\UpdateCategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
@@ -30,36 +32,9 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        $data = $request->all();
-        
-        if (!isset($data['id']) || empty($data['id'])) {
-            $nameEn = $request->input('name.en');
-            $nameAr = $request->input('name.ar');
-            $base = $nameEn ?: $nameAr;
-            $data['id'] = \Illuminate\Support\Str::slug($base);
-            
-            // Ensure uniqueness
-            $originalId = $data['id'];
-            $count = 1;
-            while (Category::where('id', $data['id'])->exists()) {
-                $data['id'] = $originalId . '-' . $count++;
-            }
-        }
-
-        $validated = validator($data, [
-            'id' => 'required|string|unique:categories,id',
-            'name' => 'required|array',
-            'name.ar' => 'required|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-            'description' => 'nullable|array',
-            'image_url' => 'nullable|string',
-            'sort_order' => 'nullable|integer',
-            'is_active' => 'nullable|boolean',
-            'icon' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id',
-        ])->validate();
+        $validated = $request->validated();
 
         $category = Category::create($validated);
 
@@ -87,21 +62,11 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateCategoryRequest $request, string $id)
     {
         $category = Category::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'nullable|array',
-            'name.ar' => 'nullable|string|max:255',
-            'name.en' => 'nullable|string|max:255',
-            'description' => 'nullable|array',
-            'image_url' => 'nullable|string',
-            'sort_order' => 'nullable|integer',
-            'is_active' => 'nullable|boolean',
-            'icon' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id',
-        ]);
+        $validated = $request->validated();
 
         $category->update($validated);
 
