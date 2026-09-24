@@ -63,7 +63,7 @@ class PaymentService
                 'payload' => $request->all(),
             ]);
 
-            throw new \SecurityException("Invalid webhook signature for {$gatewayName}");
+            throw new \App\Exceptions\InvalidWebhookSignatureException("Invalid webhook signature for {$gatewayName}");
         }
 
         $processed = $gateway->processWebhook($request);
