@@ -12,6 +12,38 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
     /**
+     * Get real-time order alerts and stats for dashboard.
+     */
+    public function alerts(Request $request)
+    {
+        $pendingCount = Order::where('status', 'pending')->count();
+        $processingCount = Order::where('status', 'processing')->count();
+        $recentOrders = Order::with('user')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn ($order) => [
+                'id' => (string) $order->id,
+                'customer_name' => $order->user?->name ?? 'عميل غير مسجل',
+                'total_amount' => (float) $order->total_amount,
+                'status' => $order->status,
+                'created_at' => $order->created_at?->toIso8601String(),
+                'time_ago' => $order->created_at?->diffForHumans(),
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'has_new_alerts' => $pendingCount > 0,
+                'pending_count' => $pendingCount,
+                'processing_count' => $processingCount,
+                'recent_orders' => $recentOrders,
+            ],
+        ]);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
