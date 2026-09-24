@@ -1,18 +1,28 @@
 <?php
-
+use App\Models\Admin;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 beforeEach(function () {
     Storage::fake('public');
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
 });
 
-it('can upload product image', function () {
-    $file = UploadedFile::fake()->image('product.jpg', 640, 480);
+function getFakeImageFile(string $name = 'image.png'): UploadedFile
+{
+    $pngBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
 
-    $response = $this->postJson('/api/v1/upload/product-image', [
+    return UploadedFile::fake()->createWithContent($name, $pngBytes);
+}
+
+it('can upload product image', function () {
+    $file = getFakeImageFile('product.png');
+
+    $response = $this->postJson('/api/v1/admin/upload/product-image', [
         'image' => $file,
     ]);
 
@@ -28,7 +38,7 @@ it('can upload product image', function () {
         ->assertJson([
             'status' => 'success',
             'data' => [
-                'name' => 'product.jpg',
+                'name' => 'product.png',
             ],
         ]);
 
@@ -39,9 +49,9 @@ it('can upload product image', function () {
 });
 
 it('can upload category image', function () {
-    $file = UploadedFile::fake()->image('category.png', 640, 480);
+    $file = getFakeImageFile('category.png');
 
-    $response = $this->postJson('/api/v1/upload/category-image', [
+    $response = $this->postJson('/api/v1/admin/upload/category-image', [
         'image' => $file,
     ]);
 
@@ -59,9 +69,9 @@ it('can upload category image', function () {
 });
 
 it('can upload generic image', function () {
-    $file = UploadedFile::fake()->image('image.webp', 640, 480);
+    $file = getFakeImageFile('image.png');
 
-    $response = $this->postJson('/api/v1/upload/image', [
+    $response = $this->postJson('/api/v1/admin/upload/image', [
         'image' => $file,
     ]);
 
@@ -72,7 +82,7 @@ it('can upload generic image', function () {
 });
 
 it('validates image upload - missing image', function () {
-    $response = $this->postJson('/api/v1/upload/product-image', []);
+    $response = $this->postJson('/api/v1/admin/upload/product-image', []);
 
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['image']);
@@ -81,7 +91,7 @@ it('validates image upload - missing image', function () {
 it('validates image upload - invalid file type', function () {
     $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
 
-    $response = $this->postJson('/api/v1/upload/product-image', [
+    $response = $this->postJson('/api/v1/admin/upload/product-image', [
         'image' => $file,
     ]);
 
@@ -90,9 +100,9 @@ it('validates image upload - invalid file type', function () {
 });
 
 it('validates image upload - file too large', function () {
-    $file = UploadedFile::fake()->image('large.jpg')->size(6000); // 6MB (exceeds 5MB limit)
+    $file = UploadedFile::fake()->create('large.jpg', 6000, 'image/jpeg'); // 6MB (exceeds 5MB limit)
 
-    $response = $this->postJson('/api/v1/upload/product-image', [
+    $response = $this->postJson('/api/v1/admin/upload/product-image', [
         'image' => $file,
     ]);
 
@@ -105,7 +115,7 @@ it('can delete image', function () {
     $path = 'products/test-image.jpg';
     Storage::disk('public')->put($path, 'fake content');
 
-    $response = $this->postJson('/api/v1/upload/delete', [
+    $response = $this->postJson('/api/v1/admin/upload/delete', [
         'path' => $path,
     ]);
 
