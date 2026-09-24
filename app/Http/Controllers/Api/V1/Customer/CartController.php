@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\Cart\AddToCartRequest;
+use App\Http\Requests\Customer\Cart\UpdateCartItemRequest;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -46,14 +48,9 @@ class CartController extends Controller
      * Store a newly created resource in storage.
      * Security: Fetch price from database, not from client request
      */
-    public function store(Request $request)
+    public function store(AddToCartRequest $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|string|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:999',
-            'flavors' => 'nullable|array',
-            'size' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         // Fetch product with stock check
         $product = Product::active()
@@ -134,15 +131,13 @@ class CartController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateCartItemRequest $request, string $id)
     {
         $cartItem = $request->user()
             ->cartItems()
             ->findOrFail($id);
 
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1|max:999',
-        ]);
+        $validated = $request->validated();
 
         // Verify stock availability
         $product = $cartItem->product;
