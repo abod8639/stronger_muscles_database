@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\GoogleSignInRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdateFcmTokenRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -227,6 +228,21 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out successfully',
+        ]);
+    }
+
+    /**
+     * Update user FCM device token.
+     */
+    public function updateFcmToken(UpdateFcmTokenRequest $request)
+    {
+        $request->user()->update([
+            'fcm_token' => $request->validated('fcm_token'),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'FCM token updated successfully',
         ]);
     }
 }
