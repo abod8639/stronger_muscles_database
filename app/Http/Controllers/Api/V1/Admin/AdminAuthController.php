@@ -1,10 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Api\V1\Admin;
- 
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Auth\AdminLoginRequest;
-use App\Http\Resources\UserResource;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -42,6 +41,7 @@ class AdminAuthController extends Controller
     public function getProfile(Request $request)
     {
         $admin = $request->user();
+
         return response()->json([
             'status' => 'success',
             'user' => [
@@ -56,6 +56,7 @@ class AdminAuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Admin logged out successfully',
