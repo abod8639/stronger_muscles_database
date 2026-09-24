@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
@@ -9,15 +10,15 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 test('admin can create a product', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
     $category = Category::factory()->create();
 
     $productData = [
         'id' => 'prod-123',
-        'name' => 'New Protein',
+        'name' => ['ar' => 'بروتين جديد', 'en' => 'New Protein'],
         'price' => 50.00,
-        'description' => 'Great protein',
+        'description' => ['ar' => 'وصف البروتين', 'en' => 'Great protein'],
         'category_id' => $category->id,
         'stock_quantity' => 100,
     ];
@@ -25,41 +26,44 @@ test('admin can create a product', function () {
     $response = $this->postJson('/api/v1/admin/products', $productData);
 
     $response->assertStatus(201)
-        ->assertJsonFragment(['name' => 'New Protein']);
+        ->assertJsonFragment(['en' => 'New Protein']);
 
     $this->assertDatabaseHas('products', ['id' => 'prod-123']);
 });
 
 test('admin can update a product', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
     $product = Product::factory()->create();
 
-    $updateData = ['name' => 'Updated Name', 'price' => 60.00];
+    $updateData = [
+        'name' => ['ar' => 'اسم معدل', 'en' => 'Updated Name'],
+        'price' => 60.00,
+    ];
 
     $response = $this->putJson("/api/v1/admin/products/{$product->id}", $updateData);
 
     $response->assertStatus(200)
-        ->assertJsonFragment(['name' => 'Updated Name']);
+        ->assertJsonFragment(['en' => 'Updated Name']);
 
-    $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Updated Name']);
+    $this->assertDatabaseHas('products', ['id' => $product->id]);
 });
 
 test('admin can delete a product', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
     $product = Product::factory()->create();
 
     $response = $this->deleteJson("/api/v1/admin/products/{$product->id}");
 
-    $response->assertStatus(204);
+    $response->assertStatus(200);
 
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
 });
 
-test('non-admin can now manage products (temporary)', function () {
+test('non-admin cannot manage products', function () {
     $user = User::factory()->create(['role' => 'customer']);
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['*'], 'sanctum');
 
-    $this->getJson('/api/v1/admin/products')->assertStatus(200);
+    $this->getJson('/api/v1/admin/products')->assertStatus(401);
 });
