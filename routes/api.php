@@ -4,18 +4,17 @@ use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Api\V1\Admin\PromoController as AdminPromoController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\Customer\CartController;
 use App\Http\Controllers\Api\V1\Customer\OrderController as CustomerOrderController;
+use App\Http\Controllers\Api\V1\Customer\PromoController as CustomerPromoController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\ImageUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Api\V1\Admin\PromoController as AdminPromoController;
-use App\Http\Controllers\Api\V1\Customer\PromoController as CustomerPromoController;
 
 Route::prefix('v1')->group(function () {
 
@@ -35,6 +34,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{id}', [AdminOrderController::class, 'update']);
+        Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
 
         // Uploads
         Route::post('/upload/product-image', [ImageUploadController::class, 'uploadProductImage']);
