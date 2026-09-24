@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
@@ -9,35 +10,41 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 test('admin can create a category', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
 
     $data = [
         'id' => 'cat-1',
-        'name' => 'New Category',
-        'description' => 'Test',
+        'name' => [
+            'ar' => 'تصنيف جديد',
+            'en' => 'New Category',
+        ],
+        'description' => [
+            'ar' => 'وصف',
+            'en' => 'Test',
+        ],
         'is_active' => true,
     ];
 
     $response = $this->postJson('/api/v1/admin/categories', $data);
 
     $response->assertStatus(201)
-        ->assertJsonFragment(['name' => 'New Category']);
+        ->assertJsonFragment(['en' => 'New Category']);
 });
 
 test('admin can delete a category if empty', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
     $category = Category::factory()->create();
 
     $response = $this->deleteJson('/api/v1/admin/categories/'.$category->id);
 
-    $response->assertStatus(202);
+    $response->assertStatus(204);
 });
 
 test('admin cannot delete a category with products', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
-    Sanctum::actingAs($admin);
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
     $category = Category::factory()->create();
     Product::factory()->create(['category_id' => $category->id]);
 
@@ -49,7 +56,7 @@ test('admin cannot delete a category with products', function () {
 
 test('non-admin cannot manage categories', function () {
     $user = User::factory()->create(['role' => 'customer']);
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['*'], 'sanctum');
 
-    $this->postJson('/api/v1/admin/categories', [])->assertStatus(403);
+    $this->postJson('/api/v1/admin/categories', [])->assertStatus(401);
 });
