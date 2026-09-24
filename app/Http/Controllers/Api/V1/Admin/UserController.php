@@ -23,9 +23,10 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone_number,
+                'role' => $user->role ?? 'user',
                 'is_active' => (bool) $user->is_active,
                 'photo_url' => $user->photo_url,
-                'total_spent' => (float) ($user->total_spent ?? 0),
+                'total_spent' => (float) ($user->getAttributes()['total_spent'] ?? $user->total_spent ?? 0),
                 'created_at' => $user->created_at->toIso8601String(),
                 'last_login' => null, // Placeholder as not currently tracked in users table
                 'addresses' => $user->addresses, // Updated to include actual addresses
