@@ -22,7 +22,7 @@ class OrderController extends Controller
             $query->where('status', $status);
         }
 
-        $orders = $query->paginate($limit)->through(fn($order) => $this->formatOrder($order));
+        $orders = $query->paginate($limit)->through(fn ($order) => $this->formatOrder($order));
 
         return response()->json([
             'status' => 'success',
@@ -46,22 +46,33 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, \App\Services\OrderService $orderService)
     {
-        $order = Order::findOrFail($id);
-
         $validated = $request->validate([
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
             'payment_status' => 'nullable|string',
             'tracking_number' => 'nullable|string',
         ]);
 
-        $order->update($validated);
+        $order = $orderService->updateOrderStatus(
+            $id,
+            $validated['status'],
+            $validated['payment_status'] ?? null,
+            $validated['tracking_number'] ?? null,
+        );
 
         return response()->json([
             'status' => 'success',
             'data' => $this->formatOrder($order),
         ]);
+    }
+
+    /**
+     * Update the order status specifically.
+     */
+    public function updateStatus(Request $request, string $id, \App\Services\OrderService $orderService)
+    {
+        return $this->update($request, $id, $orderService);
     }
 
     protected function formatOrder(Order $order): array
@@ -80,12 +91,13 @@ class OrderController extends Controller
             'address_id' => (string) $order->address_id,
             'subtotal' => (float) $order->subtotal,
             'shippingCost' => (float) $order->shipping_cost,
+            'shipping_cost' => (float) $order->shipping_cost,
             'discount' => (float) $order->discount,
             'total_amount' => (float) $order->total_amount,
             'tracking_number' => $order->tracking_number,
             'notes' => $order->notes,
             'shipping_address' => $order->shipping_address_snapshot,
-            'order_items' => $order->orderItems->map(fn($item) => [
+            'order_items' => $order->orderItems->map(fn ($item) => [
                 'id' => (string) $item->id,
                 'order_id' => (string) $item->order_id,
                 'product_id' => (string) $item->product_id,
