@@ -229,7 +229,7 @@ class Product extends Model
      */
     public function scopeWithCategoryData($query)
     {
-        return $query->with('category:id,name,slug,is_active');
+        return $query->with('category:id,name,is_active');
     }
 
     /**
