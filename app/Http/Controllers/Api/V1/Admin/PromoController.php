@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Promo\StorePromoRequest;
 use App\Http\Requests\Admin\Promo\UpdatePromoRequest;
 use App\Models\Promo;
-use Illuminate\Http\Request;
 
 class PromoController extends Controller
 {
@@ -16,6 +15,7 @@ class PromoController extends Controller
     public function index()
     {
         $promos = Promo::latest()->get();
+
         return response()->json($promos);
     }
 
@@ -30,7 +30,7 @@ class PromoController extends Controller
 
         return response()->json([
             'message' => 'تم إنشاء الإعلان بنجاح',
-            'data' => $promo
+            'data' => $promo,
         ], 201);
     }
 
@@ -40,6 +40,7 @@ class PromoController extends Controller
     public function show(string $id)
     {
         $promo = Promo::findOrFail($id);
+
         return response()->json($promo);
     }
 
@@ -56,7 +57,7 @@ class PromoController extends Controller
 
         return response()->json([
             'message' => 'تم تحديث الإعلان بنجاح',
-            'data' => $promo
+            'data' => $promo,
         ]);
     }
 
@@ -69,7 +70,7 @@ class PromoController extends Controller
         $promo->delete();
 
         return response()->json([
-            'message' => 'تم حذف الإعلان بنجاح'
+            'message' => 'تم حذف الإعلان بنجاح',
         ]);
     }
 }
