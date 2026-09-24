@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // --- 1. Admin Routes (Dashboard) ---
-    Route::middleware(['auth:admin-api'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:admin-api', 'isAdmin'])->prefix('admin')->group(function () {
         Route::apiResource('products', AdminProductController::class)->except(['destroy']);
         Route::apiResource('categories', AdminCategoryController::class)->except(['destroy']);
         Route::apiResource('promos', AdminPromoController::class)->except(['destroy']);
