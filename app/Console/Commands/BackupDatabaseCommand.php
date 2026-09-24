@@ -40,6 +40,7 @@ class BackupDatabaseCommand extends Command
 
             if ($compressedContent === false) {
                 $this->error('Failed to compress backup content.');
+
                 return self::FAILURE;
             }
 
@@ -53,6 +54,7 @@ class BackupDatabaseCommand extends Command
             return self::SUCCESS;
         } catch (\Throwable $e) {
             $this->error("Backup failed: {$e->getMessage()}");
+
             return self::FAILURE;
         }
     }
@@ -78,7 +80,7 @@ class BackupDatabaseCommand extends Command
         foreach ($tables as $table) {
             $rows = \Illuminate\Support\Facades\DB::connection($connection)->table($table)->get();
             $output .= "-- Table: {$table} (".count($rows)." records)\n";
-            $output .= "/* ".json_encode($rows)." */\n\n";
+            $output .= '/* '.json_encode($rows)." */\n\n";
         }
 
         return $output;

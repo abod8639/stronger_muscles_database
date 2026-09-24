@@ -27,8 +27,11 @@ class Admin extends Authenticatable
     ];
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
+
     public const ROLE_ADMIN = 'admin';
+
     public const ROLE_INVENTORY_MANAGER = 'inventory_manager';
+
     public const ROLE_CUSTOMER_SUPPORT = 'customer_support';
 
     protected function casts(): array
@@ -51,7 +54,7 @@ class Admin extends Authenticatable
      * Check if admin has one of the given roles.
      * Super admins automatically satisfy all role checks.
      *
-     * @param string|array<string> $roles
+     * @param  string|array<string>  $roles
      */
     public function hasRole(string|array $roles): bool
     {

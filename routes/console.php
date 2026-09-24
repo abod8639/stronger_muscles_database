@@ -8,4 +8,3 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 \Illuminate\Support\Facades\Schedule::command('app:backup-database')->dailyAt('02:00');
-

@@ -82,4 +82,3 @@ describe('Admin RBAC and Alerts', function () {
             ->assertJsonPath('data.processing_count', 2);
     });
 });
-

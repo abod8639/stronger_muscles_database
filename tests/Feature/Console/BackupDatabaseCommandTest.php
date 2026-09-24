@@ -24,4 +24,3 @@ test('app:backup-database respects custom retention option', function () {
     $this->artisan('app:backup-database --disk=local --retention=0')
         ->assertExitCode(0);
 });
-
