@@ -29,7 +29,13 @@ class PushNotificationService
             return false;
         }
 
-        return $this->sendToToken($user->fcm_token, $title, $body, $data, $user);
+        if (config('queue.default') === 'sync' || app()->environment('testing')) {
+            return $this->sendToToken($user->fcm_token, $title, $body, $data, $user);
+        }
+
+        \App\Jobs\SendPushNotificationJob::dispatch($user, $title, $body, $data);
+
+        return true;
     }
 
     /**
