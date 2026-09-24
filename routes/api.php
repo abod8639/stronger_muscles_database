@@ -22,17 +22,26 @@ Route::prefix('v1')->group(function () {
 
     // --- 1. Admin Routes (Dashboard) ---
     Route::middleware(['auth:admin-api'])->prefix('admin')->group(function () {
-        Route::apiResource('products', AdminProductController::class);
-        Route::apiResource('categories', AdminCategoryController::class);
-        Route::apiResource('users', AdminUserController::class)->only(['index']);
-        Route::apiResource('promos', AdminPromoController::class);
-        Route::apiResource('brands', \App\Http\Controllers\Api\V1\Admin\BrandController::class);
+        Route::apiResource('products', AdminProductController::class)->except(['destroy']);
+        Route::apiResource('categories', AdminCategoryController::class)->except(['destroy']);
+        Route::apiResource('promos', AdminPromoController::class)->except(['destroy']);
+        Route::apiResource('brands', \App\Http\Controllers\Api\V1\Admin\BrandController::class)->except(['destroy']);
+
+        // Restricted Actions (Super Admin & Admin only)
+        Route::middleware(['admin.role:super_admin,admin'])->group(function () {
+            Route::delete('products/{product}', [AdminProductController::class, 'destroy']);
+            Route::delete('categories/{category}', [AdminCategoryController::class, 'destroy']);
+            Route::delete('promos/{promo}', [AdminPromoController::class, 'destroy']);
+            Route::delete('brands/{brand}', [\App\Http\Controllers\Api\V1\Admin\BrandController::class, 'destroy']);
+            Route::apiResource('users', AdminUserController::class)->only(['index']);
+        });
 
         // Admin Auth actions
         Route::get('/profile', [AdminAuthController::class, 'getProfile']);
         Route::post('/logout', [AdminAuthController::class, 'logout']);
 
         // Orders management
+        Route::get('/orders/alerts', [AdminOrderController::class, 'alerts']);
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{id}', [AdminOrderController::class, 'update']);
