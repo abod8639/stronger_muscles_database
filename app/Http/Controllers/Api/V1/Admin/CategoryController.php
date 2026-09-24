@@ -16,7 +16,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $query = Category::query();
-        
+
         if ($request->boolean('tree')) {
             $query->whereNull('parent_id');
         }
