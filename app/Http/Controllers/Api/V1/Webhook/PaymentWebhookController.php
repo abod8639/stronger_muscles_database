@@ -32,7 +32,7 @@ class PaymentWebhookController extends Controller
                 'message' => 'Webhook processed successfully',
                 'data' => $result,
             ]);
-        } catch (\SecurityException $e) {
+        } catch (\App\Exceptions\InvalidWebhookSignatureException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Invalid webhook signature',
