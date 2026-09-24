@@ -59,11 +59,13 @@ return new class extends Migration
 
         if ($driver === 'sqlite') {
             $results = $conn->select("PRAGMA index_list($table)");
+
             return array_column($results, 'name');
         }
 
         if ($driver === 'mysql' || $driver === 'mariadb') {
             $results = $conn->select("SHOW INDEX FROM $table");
+
             return array_column($results, 'Key_name');
         }
 

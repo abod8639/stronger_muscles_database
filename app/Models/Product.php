@@ -201,7 +201,7 @@ class Product extends Model
         return $query->where(function ($q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
                 ->orWhere('brand', 'like', "%{$term}%") // legacy
-                ->orWhereHas('brand', function($bq) use ($term) {
+                ->orWhereHas('brand', function ($bq) use ($term) {
                     $bq->where('name', 'like', "%{$term}%");
                 })
                 ->orWhere('description', 'like', "%{$term}%");

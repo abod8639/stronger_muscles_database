@@ -27,9 +27,9 @@ class Brand extends Model
         parent::boot();
 
         static::creating(function ($brand) {
-            if (!$brand->slug) {
+            if (! $brand->slug) {
                 $nameEn = $brand->name['en'] ?? $brand->name['ar'] ?? 'brand';
-                $brand->slug = Str::slug($nameEn) . '-' . Str::random(5);
+                $brand->slug = Str::slug($nameEn).'-'.Str::random(5);
             }
         });
     }
@@ -45,6 +45,7 @@ class Brand extends Model
     public function getDisplayNameAttribute()
     {
         $locale = app()->getLocale();
+
         return $this->name[$locale] ?? $this->name['ar'] ?? $this->name['en'] ?? '';
     }
 }

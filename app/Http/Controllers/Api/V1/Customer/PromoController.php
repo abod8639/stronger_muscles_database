@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Promo;
+use Illuminate\Http\Request;
 
 class PromoController extends Controller
 {
@@ -23,11 +23,12 @@ class PromoController extends Controller
 
         $promos = Promo::where('is_active', true)->latest()->get()->map(function ($promo) use ($lang) {
             $promoArray = $promo->toArray();
-            
-            $getField = function($field) use ($promo, $lang) {
+
+            $getField = function ($field) use ($promo, $lang) {
                 if (is_array($promo->$field)) {
                     return $promo->$field[$lang] ?? $promo->$field['ar'] ?? $promo->$field['en'] ?? null;
                 }
+
                 return $promo->$field;
             };
 
