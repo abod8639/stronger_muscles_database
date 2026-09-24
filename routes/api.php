@@ -10,8 +10,10 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\Customer\CartController;
 use App\Http\Controllers\Api\V1\Customer\OrderController as CustomerOrderController;
+use App\Http\Controllers\Api\V1\Customer\PaymentController;
 use App\Http\Controllers\Api\V1\Customer\PromoController as CustomerPromoController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\Webhook\PaymentWebhookController;
 use App\Http\Controllers\ImageUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +59,12 @@ Route::prefix('v1')->group(function () {
         // Address Management
         Route::apiResource('addresses', \App\Http\Controllers\Api\V1\Customer\AddressController::class);
         Route::post('/addresses/{id}/set-default', [\App\Http\Controllers\Api\V1\Customer\AddressController::class, 'setDefault']);
+
+        // Payment
+        Route::post('/orders/{id}/pay', [PaymentController::class, 'initiatePayment']);
+
+        // Notifications
+        Route::post('/fcm-token', [AuthController::class, 'updateFcmToken']);
     });
 
     // --- 3. Public Routes (Shop/Guest) ---
@@ -68,6 +76,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/categories', [CategoryController::class, 'index']);
         Route::get('/categories/{id}', [CategoryController::class, 'show']);
     });
+
+    // --- 4. Webhooks ---
+    Route::post('/webhooks/payment/{gateway}', [PaymentWebhookController::class, 'handle'])->name('payment.webhook');
 
     // --- Auth Routes ---
     Route::prefix('auth')->group(function () {
@@ -82,6 +93,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/test-login', [AuthController::class, 'testLogin']);
         Route::middleware('auth:sanctum')->post('/update-profile', [AuthController::class, 'updateProfile']);
         Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+        Route::middleware('auth:sanctum')->post('/fcm-token', [AuthController::class, 'updateFcmToken']);
     });
 
     // Helper for authenticated user
