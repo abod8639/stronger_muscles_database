@@ -35,7 +35,8 @@ test('shop and admin endpoints return consistent product data', function () {
     $shopData = $shopResponse->json('data');
 
     // Get admin API response
-    $adminResponse = getJson("/api/v1/admin/products/{$product->id}");
+    $admin = \App\Models\Admin::factory()->create();
+    $adminResponse = $this->actingAs($admin, 'admin-api')->getJson("/api/v1/admin/products/{$product->id}");
     $adminData = $adminResponse->json('data');
 
     // Verify shop response includes all product fields
