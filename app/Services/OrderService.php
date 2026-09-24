@@ -170,7 +170,32 @@ class OrderService
                 }
             }
 
-            return $this->orderRepository->updateOrderStatus($order, $status, $paymentStatus, $trackingNumber);
+            $updatedOrder = $this->orderRepository->updateOrderStatus($order, $status, $paymentStatus, $trackingNumber);
+
+            // Send push notification to customer on status change
+            if ($status !== $oldStatus && $updatedOrder->user) {
+                $statusMessages = [
+                    'processing' => 'تم تأكيد طلبك وهو قيد التجهيز الآن.',
+                    'shipped' => 'تم شحن طلبك بنجاح! '.($trackingNumber ? "رقم التتبع: {$trackingNumber}" : ''),
+                    'delivered' => 'تم تسليم طلبك بنجاح. شكراً لتسوقك معنا!',
+                    'cancelled' => 'تم إلغاء طلبك.',
+                ];
+
+                if (isset($statusMessages[$status])) {
+                    $this->notificationService->sendToUser(
+                        $updatedOrder->user,
+                        'تحديث حالة الطلب #'.$order->id,
+                        $statusMessages[$status],
+                        [
+                            'type' => 'order_status_update',
+                            'order_id' => (string) $order->id,
+                            'status' => $status,
+                        ]
+                    );
+                }
+            }
+
+            return $updatedOrder;
         });
     }
 }
