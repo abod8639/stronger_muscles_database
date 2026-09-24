@@ -53,20 +53,9 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, \App\Services\OrderService $orderService)
+    public function store(StoreOrderRequest $request, OrderService $orderService)
     {
-        $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|string|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1|max:999',
-            'items.*.selected_flavor' => 'nullable|string',
-            'items.*.selected_size' => 'nullable|string',
-            'items.*.selectedFlavor' => 'nullable|string',
-            'items.*.selectedSize' => 'nullable|string',
-            'payment_method' => 'nullable|string|in:cash,card,paypal,stripe',
-            'address_id' => 'required|integer|exists:addresses,id',
-            'notes' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         try {
             $order = $orderService->processCheckout($request->user(), $validated);
