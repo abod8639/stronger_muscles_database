@@ -6,22 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Category\StoreCategoryRequest;
 use App\Http\Requests\Admin\Category\UpdateCategoryRequest;
 use App\Models\Category;
+use App\Services\CategoryService;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        protected CategoryService $categoryService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Category::query();
-
-        if ($request->boolean('tree')) {
-            $query->whereNull('parent_id');
-        }
-
-        $categories = $query->get()->map(fn ($category) => $this->formatCategory($category));
+        $categories = $this->categoryService->getAdminCategories($request->boolean('tree'))
+            ->map(fn ($category) => $this->formatCategory($category));
 
         return response()->json([
             'status' => 'success',
@@ -36,9 +36,7 @@ class CategoryController extends Controller
     {
         $validated = $request->validated();
 
-        $category = Category::create($validated);
-
-        $this->clearCaches();
+        $category = $this->categoryService->createCategory($validated);
 
         return response()->json([
             'status' => 'success',
@@ -51,7 +49,7 @@ class CategoryController extends Controller
      */
     public function show(string $id)
     {
-        $category = Category::findOrFail($id);
+        $category = $this->categoryService->getAdminCategory($id);
 
         return response()->json([
             'status' => 'success',
@@ -64,13 +62,9 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, string $id)
     {
-        $category = Category::findOrFail($id);
-
         $validated = $request->validated();
 
-        $category->update($validated);
-
-        $this->clearCaches();
+        $category = $this->categoryService->updateCategory($id, $validated);
 
         return response()->json([
             'status' => 'success',
@@ -83,21 +77,16 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $category = Category::findOrFail($id);
+        try {
+            $this->categoryService->deleteCategory($id);
 
-        // Check if category has products
-        if ($category->products()->count() > 0) {
+            return response()->json(null, 204);
+        } catch (\DomainException $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete category with associated products',
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        $category->delete();
-
-        $this->clearCaches();
-
-        return response()->json(null, 204);
     }
 
     protected function formatCategory(Category $category): array
