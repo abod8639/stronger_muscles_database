@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\GoogleSignInRequest;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -93,6 +97,23 @@ class AuthController extends Controller
             $user->update($updateData);
         }
 
+        if ($request->has('addresses') && is_array($request->input('addresses'))) {
+            $user->addresses()->delete();
+            foreach ($request->input('addresses') as $addrData) {
+                $user->addresses()->create([
+                    'label' => $addrData['label'] ?? 'Home',
+                    'full_name' => $addrData['full_name'] ?? $user->name,
+                    'phone' => $addrData['phone'] ?? $user->phone_number,
+                    'street' => $addrData['street'] ?? '',
+                    'city' => $addrData['city'] ?? '',
+                    'state' => $addrData['state'] ?? null,
+                    'country' => $addrData['country'] ?? null,
+                    'postal_code' => $addrData['postal_code'] ?? null,
+                    'is_default' => $addrData['is_default'] ?? false,
+                ]);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Profile updated successfully',
@@ -116,16 +137,16 @@ class AuthController extends Controller
         if (! $user) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'لا يوجد حساب مسجل بهذا البريد الإلكتروني',
+                'message' => 'Invalid credentials',
                 'error_type' => 'email_not_found',
-            ], 404);
+            ], 401);
         }
 
         // Check if password is correct
         if (! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'كلمة المرور غير صحيحة',
+                'message' => 'Invalid credentials',
                 'error_type' => 'invalid_password',
             ], 401);
         }
@@ -181,7 +202,7 @@ class AuthController extends Controller
             'message' => 'تم إنشاء الحساب بنجاح',
             'token' => $token,
             'user' => new UserResource($user->load('addresses')),
-        ], 201);
+        ], 200);
     }
 
     /**
