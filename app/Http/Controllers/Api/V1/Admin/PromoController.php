@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\Promo\StorePromoRequest;
+use App\Http\Requests\Admin\Promo\UpdatePromoRequest;
 use App\Models\Promo;
+use Illuminate\Http\Request;
 
 class PromoController extends Controller
 {
@@ -20,19 +22,9 @@ class PromoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StorePromoRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'nullable|array',
-            'subtitle' => 'nullable|array',
-            'button_text' => 'nullable|array',
-            'image_url' => 'required|string',
-            'background_color' => 'required|string',
-            'target_type' => 'nullable|string|in:none,product,brand',
-            'target_id' => 'nullable|string',
-            'target_url' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $promo = Promo::create($validated);
 
@@ -54,21 +46,11 @@ class PromoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdatePromoRequest $request, string $id)
     {
         $promo = Promo::findOrFail($id);
 
-        $validated = $request->validate([
-            'title' => 'nullable|array',
-            'subtitle' => 'nullable|array',
-            'button_text' => 'nullable|array',
-            'image_url' => 'sometimes|string',
-            'background_color' => 'sometimes|string',
-            'target_type' => 'nullable|string|in:none,product,brand',
-            'target_id' => 'nullable|string',
-            'target_url' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $promo->update($validated);
 
