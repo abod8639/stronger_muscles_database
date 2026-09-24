@@ -5,42 +5,26 @@ namespace App\Http\Controllers\Api\V1\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\Cart\AddToCartRequest;
 use App\Http\Requests\Customer\Cart\UpdateCartItemRequest;
-use App\Models\Product;
+use App\Services\CartService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
+    public function __construct(
+        protected CartService $cartService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $cartItems = $request->user()
-            ->cartItems()
-            ->with(['product:id,name,price,discount_price,stock_quantity,image_urls,brand'])
-            ->latest('added_at')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'price' => $item->price,
-                    'image_urls' => $item->image_urls,
-                    'quantity' => $item->quantity,
-                    'flavors' => $item->flavors,
-                    'size' => $item->size,
-                    'added_at' => $item->added_at,
-                    'total_price' => $item->getTotalPriceAttribute(),
-                    'product' => $item->product,
-                ];
-            });
+        $cart = $this->cartService->getUserCart($request->user());
 
         return response()->json([
             'status' => 'success',
-            'data' => $cartItems,
-            'grand_total' => $cartItems->sum('total_price'),
+            'data' => $cart['items'],
+            'grand_total' => $cart['grand_total'],
         ]);
     }
 
@@ -52,72 +36,16 @@ class CartController extends Controller
     {
         $validated = $request->validated();
 
-        // Fetch product with stock check
-        $product = Product::active()
-            ->inStock()
-            ->select(['id', 'name', 'price', 'discount_price', 'image_urls', 'stock_quantity'])
-            ->findOrFail($validated['product_id']);
+        $cartItem = $this->cartService->addToCart($request->user(), $validated);
 
-        // Security: Verify quantity doesn't exceed stock
-        if ($validated['quantity'] > $product->stock_quantity) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Requested quantity exceeds available stock',
-            ], 422);
-        }
-
-        // Get the correct price (use discount_price if available)
-        $price = ($product->discount_price > 0 && $product->discount_price < $product->price)
-            ? $product->discount_price
-            : $product->price;
-
-        // Check if item already in cart
-        $existingItem = $request->user()
-            ->cartItems()
-            ->where('product_id', $validated['product_id'])
-            ->first();
-
-        if ($existingItem) {
-            // Update quantity
-            $newQuantity = $existingItem->quantity + $validated['quantity'];
-
-            if ($newQuantity > $product->stock_quantity) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Total quantity exceeds available stock',
-                ], 422);
-            }
-
-            $existingItem->update([
-                'quantity' => $newQuantity,
-                'added_at' => now(),
-            ]);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Cart item updated',
-                'data' => $existingItem->load('product'),
-            ], 200);
-        }
-
-        // Create new cart item
-        $cartItem = $request->user()->cartItems()->create([
-            'id' => (string) Str::uuid(),
-            'product_id' => $validated['product_id'],
-            'product_name' => $product->name,
-            'price' => $price,
-            'image_urls' => $product->image_urls,
-            'quantity' => $validated['quantity'],
-            'flavors' => $validated['flavors'] ?? [],
-            'size' => $validated['size'] ?? [],
-            'added_at' => now(),
-        ]);
+        $status = $cartItem->wasRecentlyCreated ? 201 : 200;
+        $message = $cartItem->wasRecentlyCreated ? 'Item added to cart' : 'Cart item updated';
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Item added to cart',
+            'message' => $message,
             'data' => $cartItem->load('product'),
-        ], 201);
+        ], $status);
     }
 
     /**
@@ -133,22 +61,9 @@ class CartController extends Controller
      */
     public function update(UpdateCartItemRequest $request, string $id)
     {
-        $cartItem = $request->user()
-            ->cartItems()
-            ->findOrFail($id);
-
         $validated = $request->validated();
 
-        // Verify stock availability
-        $product = $cartItem->product;
-        if ($validated['quantity'] > $product->stock_quantity) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Requested quantity exceeds available stock',
-            ], 422);
-        }
-
-        $cartItem->update($validated);
+        $cartItem = $this->cartService->updateCartItemQuantity($request->user(), $id, $validated['quantity']);
 
         return response()->json([
             'status' => 'success',
@@ -162,11 +77,7 @@ class CartController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $cartItem = $request->user()
-            ->cartItems()
-            ->findOrFail($id);
-
-        $cartItem->delete();
+        $this->cartService->removeFromCart($request->user(), $id);
 
         return response()->json([
             'status' => 'success',
@@ -179,7 +90,7 @@ class CartController extends Controller
      */
     public function clearCart(Request $request)
     {
-        $request->user()->cartItems()->delete();
+        $this->cartService->clearCart($request->user());
 
         return response()->json([
             'status' => 'success',
