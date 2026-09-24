@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Upload\DeleteImageRequest;
+use App\Http\Requests\Upload\UploadImageRequest;
 use App\Services\ImageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +17,7 @@ class ImageUploadController extends Controller
      *
      * رفع صورة المنتج
      */
-    public function uploadProductImage(Request $request): JsonResponse
+    public function uploadProductImage(UploadImageRequest $request): JsonResponse
     {
         return $this->handleImageUpload($request, 'products');
     }
@@ -25,7 +27,7 @@ class ImageUploadController extends Controller
      *
      * رفع صورة التصنيف
      */
-    public function uploadCategoryImage(Request $request): JsonResponse
+    public function uploadCategoryImage(UploadImageRequest $request): JsonResponse
     {
         return $this->handleImageUpload($request, 'categories');
     }
@@ -35,7 +37,7 @@ class ImageUploadController extends Controller
      *
      * رفع صورة عامة
      */
-    public function uploadImage(Request $request): JsonResponse
+    public function uploadImage(UploadImageRequest $request): JsonResponse
     {
         return $this->handleImageUpload($request, 'images');
     }
@@ -45,11 +47,9 @@ class ImageUploadController extends Controller
      *
      * حذف صورة
      */
-    public function deleteImage(Request $request): JsonResponse
+    public function deleteImage(DeleteImageRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'path' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->imageService->delete($validated['path']);
@@ -74,9 +74,9 @@ class ImageUploadController extends Controller
     /**
      * Handle image upload logic.
      */
-    protected function handleImageUpload(Request $request, string $folder): JsonResponse
+    protected function handleImageUpload(UploadImageRequest $request, string $folder): JsonResponse
     {
-        $validated = $request->validate($this->imageService->getValidationRules());
+        $validated = $request->validated();
 
         try {
             $result = $this->imageService->upload($validated['image'], $folder);
