@@ -17,8 +17,8 @@ class CategoryController extends Controller
         $categories = Cache::remember('categories:active:list', now()->addHours(2), function () {
             return Category::active()
                 ->ordered()
-                ->withProductCount()
                 ->forListView()
+                ->withProductCount()
                 ->get();
         });
 
