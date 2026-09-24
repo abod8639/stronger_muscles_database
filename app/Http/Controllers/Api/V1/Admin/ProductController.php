@@ -95,45 +95,13 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateProductRequest $request, string $id)
     {
         $product = Product::findOrFail($id);
 
         Log::info("Product Info Update Request for ID {$id}:", $request->all());
 
-        $validated = $request->validate([
-            'name' => 'nullable|array',
-            'description' => 'nullable|array',
-            'price' => 'nullable|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0',
-            'image_urls' => 'nullable|array',
-            'category_id' => 'nullable|exists:categories,id',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'brand' => 'nullable|string|max:255',
-            'is_active' => 'nullable|boolean',
-            'is_background_white' => 'nullable|boolean',
-            'serving_size' => 'nullable|string',
-            'servings_per_container' => 'nullable|integer|min:0',
-            'flavors' => 'nullable|array',
-            'product_sizes' => 'nullable|array',
-            'size' => 'nullable|array',
-            'product_variants' => 'nullable|array',
-            'product_variants.*.id' => 'nullable|string',
-            'product_variants.*.sku' => 'required_with:product_variants|string',
-            'product_variants.*.price' => 'required_with:product_variants|numeric|min:0',
-            'product_variants.*.discount_price' => 'nullable|numeric|min:0',
-            'product_variants.*.stock_quantity' => 'required_with:product_variants|integer|min:0',
-            'product_variants.*.attributes' => 'required_with:product_variants|array',
-            'product_variants.*.is_active' => 'nullable|boolean',
-            // Legacy
-            'variants' => 'nullable|array',
-            'variants.*.id' => 'nullable|string',
-            'variants.*.sku' => 'required_with:variants|string',
-            'variants.*.price' => 'required_with:variants|numeric|min:0',
-            'variants.*.discount_price' => 'nullable|numeric|min:0',
-            'variants.*.stock_quantity' => 'required_with:variants|integer|min:0',
-            'variants.*.attributes' => 'required_with:variants|array',
-        ]);
+        $validated = $request->validated();
 
         // Normalize image_urls
         if (isset($validated['image_urls'])) {
