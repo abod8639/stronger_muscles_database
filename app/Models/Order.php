@@ -32,6 +32,8 @@ class Order extends Model
         'discount',
         'total_amount',
         'tracking_number',
+        'transaction_id',
+        'payment_details',
         'notes',
     ];
 
@@ -63,6 +65,7 @@ class Order extends Model
             'discount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'shipping_address_snapshot' => 'array',
+            'payment_details' => 'array',
         ];
     }
 
