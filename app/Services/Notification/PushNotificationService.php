@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 class PushNotificationService
 {
     protected ?string $serverKey;
+
     protected ?string $projectId;
 
     public function __construct()
@@ -24,6 +25,7 @@ class PushNotificationService
     {
         if (empty($user->fcm_token)) {
             Log::info("User #{$user->id} has no FCM token registered. Skipping push notification.");
+
             return false;
         }
 
@@ -35,7 +37,7 @@ class PushNotificationService
      */
     public function sendToToken(string $fcmToken, string $title, string $body, array $data = [], ?User $user = null): bool
     {
-        Log::info("Push Notification dispatched:", [
+        Log::info('Push Notification dispatched:', [
             'token' => substr($fcmToken, 0, 10).'...',
             'title' => $title,
             'body' => $body,
@@ -73,6 +75,7 @@ class PushNotificationService
                     $user->update(['fcm_token' => null]);
                     Log::warning("FCM token invalidated and removed for user #{$user->id}: {$error}");
                 }
+
                 return false;
             }
 
@@ -81,6 +84,7 @@ class PushNotificationService
             Log::error('FCM send failed: '.$e->getMessage(), [
                 'token' => substr($fcmToken, 0, 10).'...',
             ]);
+
             return false;
         }
     }

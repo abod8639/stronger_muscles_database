@@ -10,10 +10,15 @@ use Illuminate\Support\Facades\Log;
 class PaymobGateway implements PaymentGatewayInterface
 {
     protected ?string $apiKey;
+
     protected ?string $integrationId;
+
     protected ?string $iframeId;
+
     protected ?string $hmacSecret;
+
     protected string $currency;
+
     protected string $baseUrl;
 
     public function __construct()
@@ -36,6 +41,7 @@ class PaymobGateway implements PaymentGatewayInterface
         // If credentials are not configured, provide a mock checkout URL for testing/dev
         if (empty($this->apiKey) || empty($this->integrationId)) {
             $mockTransactionId = 'paymob_sim_'.uniqid();
+
             return [
                 'success' => true,
                 'payment_url' => "https://accept.paymob.com/api/acceptance/iframes/test?payment_token={$mockTransactionId}",
@@ -129,26 +135,26 @@ class PaymobGateway implements PaymentGatewayInterface
 
         $obj = $request->input('obj') ?? $request->all();
 
-        $concatenated = 
-            ($obj['amount_cents'] ?? '') .
-            ($obj['created_at'] ?? '') .
-            ($obj['currency'] ?? '') .
-            ($obj['error_occured'] ?? '') .
-            ($obj['has_parent_transaction'] ?? '') .
-            ($obj['id'] ?? '') .
-            ($obj['integration_id'] ?? '') .
-            ($obj['is_3d_secure'] ?? '') .
-            ($obj['is_auth'] ?? '') .
-            ($obj['is_capture'] ?? '') .
-            ($obj['is_refunded'] ?? '') .
-            ($obj['is_standalone_payment'] ?? '') .
-            ($obj['is_voided'] ?? '') .
-            (data_get($obj, 'order.id', '')) .
-            ($obj['owner'] ?? '') .
-            ($obj['pending'] ?? '') .
-            (data_get($obj, 'source_data.pan', '')) .
-            (data_get($obj, 'source_data.sub_type', '')) .
-            (data_get($obj, 'source_data.type', '')) .
+        $concatenated =
+            ($obj['amount_cents'] ?? '').
+            ($obj['created_at'] ?? '').
+            ($obj['currency'] ?? '').
+            ($obj['error_occured'] ?? '').
+            ($obj['has_parent_transaction'] ?? '').
+            ($obj['id'] ?? '').
+            ($obj['integration_id'] ?? '').
+            ($obj['is_3d_secure'] ?? '').
+            ($obj['is_auth'] ?? '').
+            ($obj['is_capture'] ?? '').
+            ($obj['is_refunded'] ?? '').
+            ($obj['is_standalone_payment'] ?? '').
+            ($obj['is_voided'] ?? '').
+            (data_get($obj, 'order.id', '')).
+            ($obj['owner'] ?? '').
+            ($obj['pending'] ?? '').
+            (data_get($obj, 'source_data.pan', '')).
+            (data_get($obj, 'source_data.sub_type', '')).
+            (data_get($obj, 'source_data.type', '')).
             (($obj['success'] ?? false) ? 'true' : 'false');
 
         $calculatedHmac = hash_hmac('sha512', $concatenated, $this->hmacSecret);

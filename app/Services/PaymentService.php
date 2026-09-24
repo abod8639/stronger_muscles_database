@@ -79,6 +79,7 @@ class PaymentService
 
             if (! $order) {
                 Log::error("Order not found during webhook processing: {$processed['order_id']}");
+
                 return ['status' => 'not_found', 'message' => 'Order not found'];
             }
 

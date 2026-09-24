@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Log;
 class StripeGateway implements PaymentGatewayInterface
 {
     protected ?string $secretKey;
+
     protected ?string $webhookSecret;
+
     protected string $currency;
 
     public function __construct()
@@ -29,6 +31,7 @@ class StripeGateway implements PaymentGatewayInterface
 
         if (empty($this->secretKey)) {
             $mockId = 'pi_sim_'.uniqid();
+
             return [
                 'success' => true,
                 'payment_url' => "https://checkout.stripe.com/pay/{$mockId}",
