@@ -13,7 +13,8 @@ class OrderService
 {
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected PushNotificationService $notificationService
+        protected PushNotificationService $notificationService,
+        protected ProductService $productService
     ) {}
 
     public function processCheckout($user, array $data)
@@ -24,24 +25,35 @@ class OrderService
             $now = now();
             $orderId = (string) Str::uuid();
 
-            // Fetch all products at once with locking
+            // Fetch all products at once with locking and eager load variants
             $productIds = collect($data['items'])->pluck('product_id')->unique()->toArray();
             $products = Product::whereIn('id', $productIds)
+                ->with('variants')
                 ->select(['id', 'name', 'price', 'discount_price', 'image_urls', 'stock_quantity', 'product_sizes'])
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
 
-            // Check all items before processing
+            // Calculate total requested quantity per product to prevent overselling
+            $totalQuantityPerProduct = [];
             foreach ($data['items'] as $item) {
-                if (! isset($products[$item['product_id']])) {
-                    throw new \Exception("Product not found: {$item['product_id']}");
+                $pid = $item['product_id'];
+                $totalQuantityPerProduct[$pid] = ($totalQuantityPerProduct[$pid] ?? 0) + $item['quantity'];
+            }
+
+            // Check all items before processing
+            foreach ($totalQuantityPerProduct as $productId => $totalQty) {
+                if (! isset($products[$productId])) {
+                    throw new \Exception("Product not found: {$productId}");
                 }
 
-                $product = $products[$item['product_id']];
+                $product = $products[$productId];
+                $productName = is_array($product->name)
+                    ? ($product->name['ar'] ?? $product->name['en'] ?? reset($product->name) ?? 'Product')
+                    : ($product->name ?? 'Product');
 
-                if ($product->stock_quantity < $item['quantity']) {
-                    throw new \Exception("Insufficient stock for: {$product->name}");
+                if ($product->stock_quantity < $totalQty) {
+                    throw new \Exception("الكمية المطلوبة غير متوفرة في المخزون للمنتج: {$productName}");
                 }
             }
 
@@ -57,8 +69,23 @@ class OrderService
                 $lineSubtotal = $unitPrice * $item['quantity'];
                 $calculatedSubtotal += $lineSubtotal;
 
-                // Deduct stock
+                // Deduct stock and increment total sales
                 $product->decrement('stock_quantity', $item['quantity']);
+                $product->increment('total_sales', $item['quantity']);
+
+                // If product has matching variants, deduct variant stock as well
+                if ($product->relationLoaded('variants') && $product->variants->isNotEmpty()) {
+                    foreach ($product->variants as $variant) {
+                        $attrs = $variant->attributes ?? [];
+                        $matchesSize = ! $selectedSize || (isset($attrs['size']) && $attrs['size'] === $selectedSize);
+                        $matchesFlavor = ! $selectedFlavor || (isset($attrs['flavor']) && $attrs['flavor'] === $selectedFlavor);
+
+                        if ($matchesSize && $matchesFlavor) {
+                            $variant->decrement('stock_quantity', min($variant->stock_quantity, $item['quantity']));
+                            break;
+                        }
+                    }
+                }
 
                 // Extract proper image URL string
                 $imageUrl = null;
@@ -112,7 +139,14 @@ class OrderService
                 'notes' => $data['notes'] ?? null,
             ];
 
-            return $this->orderRepository->createOrderWithItems($orderData, $orderItemsData);
+            $order = $this->orderRepository->createOrderWithItems($orderData, $orderItemsData);
+
+            // Invalidate product caches so subsequent API requests get fresh stock immediately
+            foreach ($productIds as $pId) {
+                $this->productService->clearCaches($pId);
+            }
+
+            return $order;
         });
     }
 
@@ -157,6 +191,7 @@ class OrderService
                 foreach ($order->orderItems as $item) {
                     if ($item->product_id) {
                         Product::where('id', $item->product_id)->increment('stock_quantity', $item->quantity);
+                        $this->productService->clearCaches($item->product_id);
                     }
                 }
             }
@@ -166,6 +201,7 @@ class OrderService
                 foreach ($order->orderItems as $item) {
                     if ($item->product_id) {
                         Product::where('id', $item->product_id)->decrement('stock_quantity', $item->quantity);
+                        $this->productService->clearCaches($item->product_id);
                     }
                 }
             }
