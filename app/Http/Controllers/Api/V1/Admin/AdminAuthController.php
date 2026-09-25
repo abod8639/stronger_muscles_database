@@ -4,12 +4,41 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Auth\AdminLoginRequest;
+use App\Http\Requests\Admin\Auth\AdminRegisterRequest;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AdminAuthController extends Controller
 {
+    public function register(AdminRegisterRequest $request)
+    {
+        $validated = $request->validated();
+
+        $admin = Admin::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'role' => $validated['role'] ?? Admin::ROLE_ADMIN,
+            'is_active' => true,
+            'last_login' => now(),
+        ]);
+
+        $token = $admin->createToken('admin_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم إنشاء حساب المشرف بنجاح',
+            'token' => $token,
+            'user' => [
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => $admin->role,
+            ],
+        ], 201);
+    }
+
     public function login(AdminLoginRequest $request)
     {
         $validated = $request->validated();
