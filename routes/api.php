@@ -55,8 +55,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/upload/delete', [ImageUploadController::class, 'deleteImage']);
     });
 
-    // Public Admin Login
+    // Public Admin Auth Routes
     Route::post('/admin/login', [AdminAuthController::class, 'login']);
+    Route::post('/admin/register', [AdminAuthController::class, 'register']);
 
     // --- 2. Customer Routes (App) ---
     // Protected by auth
