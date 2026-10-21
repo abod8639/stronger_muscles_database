@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Address;
 use App\Models\Product;
 use App\Repositories\OrderRepository;
-use App\Services\Notification\PushNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -13,7 +12,7 @@ class OrderService
 {
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected PushNotificationService $notificationService,
+        protected NotificationService $notificationService,
         protected ProductService $productService
     ) {}
 
@@ -218,15 +217,12 @@ class OrderService
                 ];
 
                 if (isset($statusMessages[$status])) {
-                    $this->notificationService->sendToUser(
+                    $this->notificationService->recordOrderNotification(
                         $updatedOrder->user,
+                        $updatedOrder,
                         'تحديث حالة الطلب #'.$order->id,
                         $statusMessages[$status],
-                        [
-                            'type' => 'order_status_update',
-                            'order_id' => (string) $order->id,
-                            'status' => $status,
-                        ]
+                        $status
                     );
                 }
             }
