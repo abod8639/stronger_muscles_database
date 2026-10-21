@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Events\SupportMessageSent;
+use App\Events\SupportTicketCreated;
+use App\Events\SupportTicketUpdated;
 use App\Models\Admin;
 use App\Models\Notification;
 use App\Models\SupportMessage;
@@ -100,6 +103,9 @@ class SupportTicketService
             ]);
         }
 
+        // Broadcast WebSocket event
+        SupportTicketCreated::dispatch($ticket);
+
         // Sync to Firebase for realtime dashboard listening
         $this->syncToFirebase($ticket);
 
@@ -125,6 +131,9 @@ class SupportTicketService
         if (in_array($ticket->status, ['waiting_user', 'resolved', 'closed'])) {
             $this->ticketRepository->updateStatus($ticket, 'in_progress');
         }
+
+        // Broadcast WebSocket event
+        SupportMessageSent::dispatch($ticket, $supportMessage);
 
         // Sync to Firebase
         $this->syncToFirebase($ticket, $supportMessage);
@@ -161,6 +170,9 @@ class SupportTicketService
             // Notify user via Push Notification & In-app Notification
             $this->notifyUserOfReply($ticket, $message, $admin);
         }
+
+        // Broadcast WebSocket event
+        SupportMessageSent::dispatch($ticket, $supportMessage);
 
         // Sync to Firebase
         $this->syncToFirebase($ticket, $supportMessage);
@@ -203,6 +215,9 @@ class SupportTicketService
             ]);
         }
 
+        // Broadcast WebSocket event
+        SupportTicketUpdated::dispatch($updatedTicket);
+
         $this->syncToFirebase($updatedTicket);
 
         return $updatedTicket;
@@ -214,6 +229,10 @@ class SupportTicketService
     public function updatePriority(SupportTicket $ticket, string $priority): SupportTicket
     {
         $updatedTicket = $this->ticketRepository->updatePriority($ticket, $priority);
+
+        // Broadcast WebSocket event
+        SupportTicketUpdated::dispatch($updatedTicket);
+
         $this->syncToFirebase($updatedTicket);
 
         return $updatedTicket;
@@ -225,6 +244,10 @@ class SupportTicketService
     public function assignAdmin(SupportTicket $ticket, ?int $adminId): SupportTicket
     {
         $updatedTicket = $this->ticketRepository->assignAdmin($ticket, $adminId);
+
+        // Broadcast WebSocket event
+        SupportTicketUpdated::dispatch($updatedTicket);
+
         $this->syncToFirebase($updatedTicket);
 
         return $updatedTicket;
