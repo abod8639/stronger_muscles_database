@@ -52,9 +52,14 @@ return [
     ],
 
     'fcm' => [
-        'project_id' => env('FIREBASE_PROJECT_ID', 'strongermuscles-8dfd3'),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'stronger-muscles'),
         'server_key' => env('FCM_SERVER_KEY'),
         'credentials_path' => env('FIREBASE_CREDENTIALS_PATH'),
+    ],
+
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID', 'stronger-muscles'),
+        'database_url' => env('FIREBASE_DATABASE_URL', 'https://stronger-muscles-default-rtdb.firebaseio.com'),
     ],
 
 ];
