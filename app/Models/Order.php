@@ -86,6 +86,14 @@ class Order extends Model
     }
 
     /**
+     * Alias for orderItems.
+     */
+    public function items(): HasMany
+    {
+        return $this->orderItems();
+    }
+
+    /**
      * Scope: Only completed orders
      */
     public function scopeCompleted($query)
