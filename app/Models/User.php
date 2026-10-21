@@ -78,6 +78,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the reviews written by the user.
+     */
+    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get support tickets created by the user.
+     */
+    public function supportTickets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
+    /**
      * Accessor for total spent.
      */
     public function getTotalSpentAttribute(): float
