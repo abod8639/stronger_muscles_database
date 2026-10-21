@@ -47,6 +47,21 @@ Route::prefix('v1')->group(function () {
         Route::patch('/orders/{id}', [AdminOrderController::class, 'update']);
         Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
 
+        // Notifications management
+        Route::get('/notifications', [\App\Http\Controllers\Api\V1\Admin\NotificationController::class, 'index']);
+        Route::post('/notifications', [\App\Http\Controllers\Api\V1\Admin\NotificationController::class, 'store']);
+        Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\V1\Admin\NotificationController::class, 'destroy']);
+
+        // Support & Complaints management
+        Route::get('/support/tickets/stats', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'stats']);
+        Route::get('/support/tickets', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'index']);
+        Route::get('/support/tickets/{id}', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'show']);
+        Route::post('/support/tickets/{id}/messages', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'addMessage']);
+        Route::patch('/support/tickets/{id}/status', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'updateStatus']);
+        Route::patch('/support/tickets/{id}/priority', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'updatePriority']);
+        Route::patch('/support/tickets/{id}/assign', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'assign']);
+        Route::delete('/support/tickets/{id}', [\App\Http\Controllers\Api\V1\Admin\SupportTicketController::class, 'destroy']);
+
         // Uploads
         Route::post('/upload/product-image', [ImageUploadController::class, 'uploadProductImage']);
         Route::post('/upload/category-image', [ImageUploadController::class, 'uploadCategoryImage']);
@@ -74,7 +89,23 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{id}/pay', [PaymentController::class, 'initiatePayment']);
 
         // Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Api\V1\Customer\NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\V1\Customer\NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Api\V1\Customer\NotificationController::class, 'markAllAsRead']);
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\V1\Customer\NotificationController::class, 'markAsRead']);
         Route::post('/fcm-token', [AuthController::class, 'updateFcmToken']);
+
+        // Reviews
+        Route::post('/products/{productId}/reviews', [\App\Http\Controllers\Api\V1\Customer\ReviewController::class, 'store']);
+        Route::get('/products/{productId}/user-review', [\App\Http\Controllers\Api\V1\Customer\ReviewController::class, 'userReview']);
+        Route::delete('/reviews/{id}', [\App\Http\Controllers\Api\V1\Customer\ReviewController::class, 'destroy']);
+
+        // Support Tickets & Complaints
+        Route::get('/support/tickets', [\App\Http\Controllers\Api\V1\Customer\SupportTicketController::class, 'index']);
+        Route::post('/support/tickets', [\App\Http\Controllers\Api\V1\Customer\SupportTicketController::class, 'store']);
+        Route::get('/support/tickets/{id}', [\App\Http\Controllers\Api\V1\Customer\SupportTicketController::class, 'show']);
+        Route::post('/support/tickets/{id}/messages', [\App\Http\Controllers\Api\V1\Customer\SupportTicketController::class, 'addMessage']);
+        Route::post('/support/tickets/{id}/close', [\App\Http\Controllers\Api\V1\Customer\SupportTicketController::class, 'close']);
     });
 
     // --- 3. Public Routes (Shop/Guest) ---
@@ -83,8 +114,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/promos', [CustomerPromoController::class, 'index']);
         Route::get('/products', [ProductController::class, 'index']);
         Route::get('/products/{id}', [ProductController::class, 'show']);
+        Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\V1\ReviewController::class, 'index']);
         Route::get('/categories', [CategoryController::class, 'index']);
         Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+        // Guest support ticket submission
+        Route::post('/support/tickets', [\App\Http\Controllers\Api\V1\Customer\SupportTicketController::class, 'store']);
     });
 
     // --- 4. Webhooks ---
