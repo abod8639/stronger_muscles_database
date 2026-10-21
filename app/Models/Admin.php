@@ -67,4 +67,12 @@ class Admin extends Authenticatable
 
         return in_array($this->role, $roleList, true);
     }
+
+    /**
+     * Get tickets assigned to this admin.
+     */
+    public function assignedTickets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'admin_id');
+    }
 }
