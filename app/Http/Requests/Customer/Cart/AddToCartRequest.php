@@ -21,6 +21,8 @@ class AddToCartRequest extends FormRequest
             'quantity' => 'required|integer|min:1',
             'selected_flavor' => 'nullable|string',
             'selected_size' => 'nullable|string',
+            'flavor' => 'nullable|string',
+            'size' => 'nullable|string',
         ];
     }
 
