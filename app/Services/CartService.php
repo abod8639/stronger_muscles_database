@@ -24,6 +24,7 @@ class CartService
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
+                    'user_id' => (string) $item->user_id,
                     'product_id' => $item->product_id,
                     'product_name' => $item->product_name,
                     'price' => (float) $item->price,
@@ -31,6 +32,9 @@ class CartService
                     'quantity' => (int) $item->quantity,
                     'flavors' => $item->flavors,
                     'size' => $item->size,
+                    'selected_flavor' => is_array($item->flavors) ? ($item->flavors[0] ?? null) : $item->flavors,
+                    'selected_size' => is_array($item->size) ? ($item->size[0] ?? null) : $item->size,
+                    'flavor' => is_array($item->flavors) ? ($item->flavors[0] ?? null) : $item->flavors,
                     'added_at' => $item->added_at,
                     'total_price' => (float) $item->getTotalPriceAttribute(),
                     'product' => $item->product,
@@ -63,6 +67,9 @@ class CartService
             ? $product->discount_price
             : $product->price;
 
+        $flavor = $data['selected_flavor'] ?? $data['flavor'] ?? null;
+        $size = $data['selected_size'] ?? $data['size'] ?? null;
+
         $existingItem = $this->cartRepository->findItemByProductForUser($user, $data['product_id']);
 
         if ($existingItem) {
@@ -76,19 +83,25 @@ class CartService
 
             return $this->cartRepository->updateItem($existingItem, [
                 'quantity' => $newQuantity,
+                'flavors' => $flavor ? [$flavor] : ($existingItem->flavors ?? []),
+                'size' => $size ? (is_array($size) ? $size : [$size]) : ($existingItem->size ?? []),
                 'added_at' => now(),
             ]);
         }
 
+        $productName = is_array($product->name)
+            ? ($product->name['ar'] ?? $product->name['en'] ?? json_encode($product->name, JSON_UNESCAPED_UNICODE))
+            : (string) $product->name;
+
         return $this->cartRepository->createItem($user, [
             'id' => (string) Str::uuid(),
             'product_id' => $data['product_id'],
-            'product_name' => $product->name,
+            'product_name' => $productName,
             'price' => $price,
             'image_urls' => $product->image_urls,
             'quantity' => $data['quantity'],
-            'flavors' => $data['flavors'] ?? [],
-            'size' => $data['size'] ?? [],
+            'flavors' => $flavor ? [$flavor] : ($data['flavors'] ?? []),
+            'size' => $size ? (is_array($size) ? $size : [$size]) : ($data['size'] ?? []),
             'added_at' => now(),
         ]);
     }
