@@ -10,6 +10,11 @@ class Product extends Model
     /** @use HasFactory<\Database\Factories\ProductFactory> */
     use HasFactory;
 
+    /**
+     * Products at or below this stock level (but above zero) count as low stock.
+     */
+    public const LOW_STOCK_THRESHOLD = 10;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
