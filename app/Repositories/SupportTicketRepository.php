@@ -178,12 +178,17 @@ class SupportTicketRepository
      */
     public function getStats(): array
     {
-        $total = SupportTicket::count();
-        $open = SupportTicket::where('status', 'open')->count();
-        $inProgress = SupportTicket::where('status', 'in_progress')->count();
-        $waitingUser = SupportTicket::where('status', 'waiting_user')->count();
-        $resolved = SupportTicket::where('status', 'resolved')->count();
-        $closed = SupportTicket::where('status', 'closed')->count();
+        $byStatus = SupportTicket::query()
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $total = (int) $byStatus->sum();
+        $open = (int) ($byStatus['open'] ?? 0);
+        $inProgress = (int) ($byStatus['in_progress'] ?? 0);
+        $waitingUser = (int) ($byStatus['waiting_user'] ?? 0);
+        $resolved = (int) ($byStatus['resolved'] ?? 0);
+        $closed = (int) ($byStatus['closed'] ?? 0);
         $urgent = SupportTicket::where('priority', 'urgent')->whereIn('status', ['open', 'in_progress'])->count();
         $resolvedToday = SupportTicket::where('status', 'resolved')->whereDate('resolved_at', today())->count();
 
