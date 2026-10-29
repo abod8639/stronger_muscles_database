@@ -24,6 +24,7 @@ class UpdateStoreSettingsRequest extends FormRequest
             'currency' => 'sometimes|required|string|max:8',
             'delivery_fee' => 'sometimes|required|numeric|min:0',
             'free_delivery_threshold' => 'sometimes|required|numeric|min:0',
+            'tax_rate' => 'sometimes|required|numeric|min:0|max:100',
             'is_store_open' => 'sometimes|required|boolean',
             'order_notifications_enabled' => 'sometimes|required|boolean',
             'maintenance_mode' => 'sometimes|required|boolean',
@@ -49,6 +50,9 @@ class UpdateStoreSettingsRequest extends FormRequest
             'delivery_fee.min' => 'رسوم التوصيل لا يمكن أن تكون سالبة',
             'free_delivery_threshold.numeric' => 'حد التوصيل المجاني يجب أن يكون رقماً',
             'free_delivery_threshold.min' => 'حد التوصيل المجاني لا يمكن أن يكون سالباً',
+            'tax_rate.numeric' => 'نسبة الضريبة يجب أن تكون رقماً',
+            'tax_rate.min' => 'نسبة الضريبة لا يمكن أن تكون سالبة',
+            'tax_rate.max' => 'نسبة الضريبة لا يمكن أن تتجاوز 100%',
             'allowed_admin_roles.min' => 'يجب السماح بدور واحد على الأقل',
             'allowed_admin_roles.*.in' => 'دور المشرف غير صالح',
         ];
