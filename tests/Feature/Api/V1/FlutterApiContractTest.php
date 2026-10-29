@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Laravel\Sanctum\Sanctum;
 
@@ -108,4 +109,71 @@ it('remembers the default address created through the api', function () {
     $this->getJson('/api/v1/customer/profile')
         ->assertSuccessful()
         ->assertJsonPath('user.default_address_id', (string) $defaultAddressId);
+});
+
+it('returns admin users in the shape the dashboard parses', function () {
+    $user = User::factory()->create(['is_active' => true, 'phone_number' => '01000000000', 'last_login' => now()]);
+    Address::factory()->default()->create(['user_id' => $user->id]);
+    User::factory()->create(['is_active' => false]);
+    Sanctum::actingAs(Admin::factory()->create(), ['*'], 'admin-api');
+
+    $this->getJson('/api/v1/admin/users')
+        ->assertSuccessful()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('total_users', 2)
+            ->where('active_users', 1)
+            ->where('inactive_users', 1)
+            ->has('users.0', fn (AssertableJson $json) => $json
+                ->whereType('id', 'integer')
+                ->whereType('name', 'string')
+                ->where('phone_number', '01000000000')
+                ->whereType('last_login', 'string')
+                ->has('addresses.0', fn (AssertableJson $json) => $json
+                    ->whereType('id', 'string')
+                    ->whereType('fullName', 'string')
+                    ->where('isDefault', true)
+                    ->etc())
+                ->etc())
+            ->etc());
+});
+
+it('loads admin users with a fixed number of queries', function () {
+    Sanctum::actingAs(Admin::factory()->create(), ['*'], 'admin-api');
+    $countQueries = function (): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->getJson('/api/v1/admin/users')->assertSuccessful();
+
+        return count(DB::getQueryLog());
+    };
+
+    Order::factory()->create();
+    $queriesForOneUser = $countQueries();
+
+    Order::factory()->count(5)->create();
+    $queriesForSixUsers = $countQueries();
+
+    expect($queriesForSixUsers)->toBe($queriesForOneUser);
+});
+
+it('saves the language and notification preferences sent by the app', function () {
+    $user = User::factory()->create(['preferred_language' => 'ar', 'notifications_enabled' => true]);
+    Sanctum::actingAs($user);
+
+    $this->postJson('/api/v1/auth/update-profile', [
+        'preferred_language' => 'en',
+        'notifications_enabled' => false,
+    ])->assertSuccessful();
+
+    expect($user->fresh()->preferred_language)->toBe('en')
+        ->and($user->fresh()->notifications_enabled)->toBeFalse();
+});
+
+it('records the last login time', function () {
+    $user = User::factory()->create(['email' => 'login@example.com', 'password' => 'password']);
+
+    $this->postJson('/api/v1/auth/login', ['email' => 'login@example.com', 'password' => 'password'])
+        ->assertSuccessful();
+
+    expect($user->fresh()->last_login)->not->toBeNull();
 });
