@@ -104,7 +104,11 @@ class SupportTicketService
         }
 
         // Broadcast WebSocket event
-        SupportTicketCreated::dispatch($ticket);
+        try {
+            SupportTicketCreated::dispatch($ticket);
+        } catch (\Throwable $e) {
+            Log::warning("WebSocket broadcast failed for SupportTicketCreated: {$e->getMessage()}");
+        }
 
         // Sync to Firebase for realtime dashboard listening
         $this->syncToFirebase($ticket);
@@ -133,7 +137,11 @@ class SupportTicketService
         }
 
         // Broadcast WebSocket event
-        SupportMessageSent::dispatch($ticket, $supportMessage);
+        try {
+            SupportMessageSent::dispatch($ticket, $supportMessage);
+        } catch (\Throwable $e) {
+            Log::warning("WebSocket broadcast failed for SupportMessageSent: {$e->getMessage()}");
+        }
 
         // Sync to Firebase
         $this->syncToFirebase($ticket, $supportMessage);
@@ -172,7 +180,11 @@ class SupportTicketService
         }
 
         // Broadcast WebSocket event
-        SupportMessageSent::dispatch($ticket, $supportMessage);
+        try {
+            SupportMessageSent::dispatch($ticket, $supportMessage);
+        } catch (\Throwable $e) {
+            Log::warning("WebSocket broadcast failed for SupportMessageSent: {$e->getMessage()}");
+        }
 
         // Sync to Firebase
         $this->syncToFirebase($ticket, $supportMessage);
@@ -216,7 +228,11 @@ class SupportTicketService
         }
 
         // Broadcast WebSocket event
-        SupportTicketUpdated::dispatch($updatedTicket);
+        try {
+            SupportTicketUpdated::dispatch($updatedTicket);
+        } catch (\Throwable $e) {
+            Log::warning("WebSocket broadcast failed for SupportTicketUpdated: {$e->getMessage()}");
+        }
 
         $this->syncToFirebase($updatedTicket);
 
@@ -231,7 +247,11 @@ class SupportTicketService
         $updatedTicket = $this->ticketRepository->updatePriority($ticket, $priority);
 
         // Broadcast WebSocket event
-        SupportTicketUpdated::dispatch($updatedTicket);
+        try {
+            SupportTicketUpdated::dispatch($updatedTicket);
+        } catch (\Throwable $e) {
+            Log::warning("WebSocket broadcast failed for SupportTicketUpdated: {$e->getMessage()}");
+        }
 
         $this->syncToFirebase($updatedTicket);
 
@@ -246,7 +266,11 @@ class SupportTicketService
         $updatedTicket = $this->ticketRepository->assignAdmin($ticket, $adminId);
 
         // Broadcast WebSocket event
-        SupportTicketUpdated::dispatch($updatedTicket);
+        try {
+            SupportTicketUpdated::dispatch($updatedTicket);
+        } catch (\Throwable $e) {
+            Log::warning("WebSocket broadcast failed for SupportTicketUpdated: {$e->getMessage()}");
+        }
 
         $this->syncToFirebase($updatedTicket);
 
