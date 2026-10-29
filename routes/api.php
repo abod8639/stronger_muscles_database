@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
+use App\Http\Controllers\Api\V1\Admin\AdminThemeController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\PromoController as AdminPromoController;
+use App\Http\Controllers\Api\V1\Admin\StoreSettingController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
@@ -12,6 +15,7 @@ use App\Http\Controllers\Api\V1\Customer\CartController;
 use App\Http\Controllers\Api\V1\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Api\V1\Customer\PaymentController;
 use App\Http\Controllers\Api\V1\Customer\PromoController as CustomerPromoController;
+use App\Http\Controllers\Api\V1\Customer\WishlistController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\Webhook\PaymentWebhookController;
 use App\Http\Controllers\ImageUploadController;
@@ -34,10 +38,18 @@ Route::prefix('v1')->group(function () {
             Route::delete('promos/{promo}', [AdminPromoController::class, 'destroy']);
             Route::delete('brands/{brand}', [\App\Http\Controllers\Api\V1\Admin\BrandController::class, 'destroy']);
             Route::apiResource('users', AdminUserController::class)->only(['index']);
+            Route::put('/settings', [StoreSettingController::class, 'update']);
         });
+
+        // Dashboard home, sidebar badges and store settings
+        Route::get('/dashboard', [DashboardController::class, 'stats']);
+        Route::get('/navigation/badges', [DashboardController::class, 'navigationBadges']);
+        Route::get('/settings', [StoreSettingController::class, 'show']);
 
         // Admin Auth actions
         Route::get('/profile', [AdminAuthController::class, 'getProfile']);
+        Route::get('/profile/theme', [AdminThemeController::class, 'show']);
+        Route::put('/profile/theme', [AdminThemeController::class, 'update']);
         Route::post('/logout', [AdminAuthController::class, 'logout']);
 
         // Orders management
@@ -79,6 +91,11 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->prefix('customer')->group(function () {
         Route::get('/profile', [AuthController::class, 'getProfile']); // Assuming typical profile fetch if needed, or use /user
         Route::apiResource('cart', CartController::class);
+
+        // Wishlist
+        Route::get('/wishlist', [WishlistController::class, 'index']);
+        Route::post('/wishlist', [WishlistController::class, 'store']);
+        Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
         Route::apiResource('orders', CustomerOrderController::class)->only(['index', 'show', 'store']);
 
         // Address Management
