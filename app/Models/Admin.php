@@ -17,6 +17,8 @@ class Admin extends Authenticatable
         'password',
         'role',
         'photo_url',
+        'theme_mode',
+        'theme_updated_at',
         'is_active',
         'last_login',
     ];
@@ -39,6 +41,7 @@ class Admin extends Authenticatable
         return [
             'password' => 'hashed',
             'last_login' => 'datetime',
+            'theme_updated_at' => 'datetime',
         ];
     }
 
