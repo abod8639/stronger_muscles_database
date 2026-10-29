@@ -17,7 +17,7 @@ class BrandRepository
 
     public function getAllBrands(): Collection
     {
-        return Brand::orderBy('created_at', 'desc')->get();
+        return Brand::query()->withCount('products')->orderBy('created_at', 'desc')->get();
     }
 
     public function findOrFail(string $id): Brand
