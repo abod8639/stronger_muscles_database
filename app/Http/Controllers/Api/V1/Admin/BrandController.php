@@ -97,7 +97,7 @@ class BrandController extends Controller
             'slug' => $brand->slug,
             'imageUrl' => $brand->image_url,
             'isActive' => (bool) $brand->is_active,
-            'productsCount' => $brand->products()->count(),
+            'productsCount' => $brand->products_count ?? $brand->products()->count(),
             'createdAt' => $brand->created_at ? $brand->created_at->toIso8601String() : null,
         ];
     }
