@@ -19,6 +19,7 @@ class StoreSetting extends Model
         'currency',
         'delivery_fee',
         'free_delivery_threshold',
+        'tax_rate',
         'is_store_open',
         'order_notifications_enabled',
         'maintenance_mode',
@@ -30,6 +31,7 @@ class StoreSetting extends Model
         return [
             'delivery_fee' => 'decimal:2',
             'free_delivery_threshold' => 'decimal:2',
+            'tax_rate' => 'decimal:2',
             'is_store_open' => 'boolean',
             'order_notifications_enabled' => 'boolean',
             'maintenance_mode' => 'boolean',
@@ -64,5 +66,32 @@ class StoreSetting extends Model
         }
 
         return (float) $this->delivery_fee;
+    }
+
+    /**
+     * Tax on the products subtotal (delivery is not taxed), rounded to 2 decimals.
+     */
+    public function taxFor(float $subtotal): float
+    {
+        return round($subtotal * (float) $this->tax_rate / 100, 2);
+    }
+
+    /**
+     * Delivery, tax and grand total for an order subtotal.
+     *
+     * @return array{subtotal: float, shipping_cost: float, tax_amount: float, discount: float, total_amount: float}
+     */
+    public function totalsFor(float $subtotal, float $discount = 0): array
+    {
+        $shippingCost = $this->deliveryFeeFor($subtotal);
+        $taxAmount = $this->taxFor($subtotal);
+
+        return [
+            'subtotal' => round($subtotal, 2),
+            'shipping_cost' => $shippingCost,
+            'tax_amount' => $taxAmount,
+            'discount' => $discount,
+            'total_amount' => round(max(0, $subtotal + $shippingCost + $taxAmount - $discount), 2),
+        ];
     }
 }
