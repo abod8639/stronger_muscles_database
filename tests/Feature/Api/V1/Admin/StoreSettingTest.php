@@ -41,6 +41,7 @@ it('returns default settings with numeric money fields', function () {
                 ->whereType('delivery_fee', 'integer|double')
                 ->where('delivery_fee', 50)
                 ->whereType('free_delivery_threshold', 'integer|double')
+                ->where('tax_rate', 0)
                 ->where('is_store_open', true)
                 ->where('maintenance_mode', false)
                 ->where('allowed_admin_roles', StoreSetting::DEFAULT_ADMIN_ROLES)
@@ -56,6 +57,7 @@ it('updates settings and ignores unknown fields', function () {
         'store_name' => 'Stronger Muscles Cairo',
         'delivery_fee' => 75.5,
         'free_delivery_threshold' => 1000,
+        'tax_rate' => 14,
         'is_store_open' => false,
         'allowed_admin_roles' => ['super_admin'],
         'updated_at' => '2020-01-01T00:00:00Z',
@@ -63,6 +65,7 @@ it('updates settings and ignores unknown fields', function () {
         ->assertSuccessful()
         ->assertJsonPath('data.store_name', 'Stronger Muscles Cairo')
         ->assertJsonPath('data.delivery_fee', 75.5)
+        ->assertJsonPath('data.tax_rate', 14)
         ->assertJsonPath('data.is_store_open', false)
         ->assertJsonPath('data.allowed_admin_roles', ['super_admin']);
 
@@ -78,6 +81,8 @@ it('validates settings', function (array $payload, string $field) {
 })->with([
     'negative delivery fee' => [['delivery_fee' => -1], 'delivery_fee'],
     'text delivery fee' => [['delivery_fee' => 'free'], 'delivery_fee'],
+    'negative tax rate' => [['tax_rate' => -5], 'tax_rate'],
+    'tax rate above 100' => [['tax_rate' => 101], 'tax_rate'],
     'invalid email' => [['support_email' => 'not-an-email'], 'support_email'],
     'unknown role' => [['allowed_admin_roles' => ['owner']], 'allowed_admin_roles.0'],
     'no roles' => [['allowed_admin_roles' => []], 'allowed_admin_roles'],
@@ -99,11 +104,24 @@ it('charges the configured delivery fee at checkout', function () {
         ->assertJsonPath('data.total_amount', 130);
 });
 
-it('keeps charging 50 for delivery until an admin changes it', function () {
+it('keeps charging 50 for delivery and no tax until an admin changes it', function () {
     placeOrderFor(100)
         ->assertCreated()
         ->assertJsonPath('data.shippingCost', 50)
+        ->assertJsonPath('data.taxAmount', 0)
         ->assertJsonPath('data.total_amount', 150);
+});
+
+it('charges the configured tax on the products subtotal only', function () {
+    StoreSetting::factory()->create(['delivery_fee' => 50, 'tax_rate' => 14]);
+
+    placeOrderFor(100)
+        ->assertCreated()
+        ->assertJsonPath('data.shippingCost', 50)
+        ->assertJsonPath('data.taxAmount', 14)
+        ->assertJsonPath('data.total_amount', 164);
+
+    expect(App\Models\Order::query()->sole()->tax_amount)->toBe('14.00');
 });
 
 it('waives delivery once the free delivery threshold is reached', function (int $price, int $expectedShipping) {
