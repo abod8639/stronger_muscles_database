@@ -27,10 +27,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
+            $table->dropIndex(['transaction_id']);
             $table->dropColumn(['transaction_id', 'payment_details']);
         });
 
         Schema::table('users', function (Blueprint $table) {
+            $table->dropIndex(['fcm_token']);
             $table->dropColumn('fcm_token');
         });
     }
