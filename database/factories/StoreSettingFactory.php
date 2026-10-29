@@ -24,6 +24,7 @@ class StoreSettingFactory extends Factory
             'currency' => 'EGP',
             'delivery_fee' => 50,
             'free_delivery_threshold' => 0,
+            'tax_rate' => 0,
             'is_store_open' => true,
             'order_notifications_enabled' => true,
             'maintenance_mode' => false,
