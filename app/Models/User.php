@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'photo_url',
         'phone_number',
+        'default_address_id',
         'role',
         'is_active',
         'fcm_token',
