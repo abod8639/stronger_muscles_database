@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Address;
 use App\Models\Product;
+use App\Models\StoreSetting;
 use App\Repositories\OrderRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -18,7 +19,13 @@ class OrderService
 
     public function processCheckout($user, array $data)
     {
-        return DB::transaction(function () use ($user, $data) {
+        $storeSettings = StoreSetting::current();
+
+        if (! $storeSettings->isAcceptingOrders()) {
+            throw new \Exception('المتجر لا يستقبل طلبات حالياً، يرجى المحاولة لاحقاً');
+        }
+
+        return DB::transaction(function () use ($user, $data, $storeSettings) {
             $calculatedSubtotal = 0;
             $orderItemsData = [];
             $now = now();
@@ -108,7 +115,7 @@ class OrderService
             }
 
             // Final Calculation
-            $shippingCost = 50.0; // Hardcoded or fetching from config
+            $shippingCost = $storeSettings->deliveryFeeFor($calculatedSubtotal);
             $discount = 0; // Validate coupon if table available
 
             $grandTotal = max(0, $calculatedSubtotal + $shippingCost - $discount);
