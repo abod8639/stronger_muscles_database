@@ -25,7 +25,7 @@ class SupportTicketResource extends JsonResource
             'category' => $this->category,
             'priority' => $this->priority,
             'status' => $this->status,
-            'order_id' => $this->order_id ? (int) $this->order_id : null,
+            'order_id' => $this->order_id,
             'admin_id' => $this->admin_id ? (int) $this->admin_id : null,
             'assigned_admin' => $this->whenLoaded('admin', function () {
                 return $this->admin ? [
