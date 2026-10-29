@@ -25,6 +25,9 @@ class User extends Authenticatable
         'photo_url',
         'phone_number',
         'default_address_id',
+        'preferred_language',
+        'notifications_enabled',
+        'last_login',
         'role',
         'is_active',
         'fcm_token',
@@ -51,6 +54,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login' => 'datetime',
+            'notifications_enabled' => 'boolean',
         ];
     }
 
@@ -68,6 +72,14 @@ class User extends Authenticatable
     public function cartItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(CartItem::class);
+    }
+
+    /**
+     * Get the products the user saved to their wishlist.
+     */
+    public function wishlistItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
     }
 
     /**
@@ -99,6 +111,10 @@ class User extends Authenticatable
      */
     public function getTotalSpentAttribute(): float
     {
+        if (array_key_exists('total_spent', $this->attributes)) {
+            return (float) $this->attributes['total_spent'];
+        }
+
         return (float) $this->orders()->where('status', 'delivered')->sum('total_amount');
     }
 
@@ -107,6 +123,10 @@ class User extends Authenticatable
      */
     public function getOrdersCountAttribute(): int
     {
+        if (array_key_exists('orders_count', $this->attributes)) {
+            return (int) $this->attributes['orders_count'];
+        }
+
         return (int) $this->orders()->count();
     }
 }
