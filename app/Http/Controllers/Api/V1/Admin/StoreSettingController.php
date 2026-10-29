@@ -36,6 +36,7 @@ class StoreSettingController extends Controller
                 'currency' => $settings->currency,
                 'delivery_fee' => (float) $settings->delivery_fee,
                 'free_delivery_threshold' => (float) $settings->free_delivery_threshold,
+                'tax_rate' => (float) $settings->tax_rate,
                 'is_store_open' => $settings->is_store_open,
                 'order_notifications_enabled' => $settings->order_notifications_enabled,
                 'maintenance_mode' => $settings->maintenance_mode,
