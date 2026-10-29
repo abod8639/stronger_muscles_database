@@ -115,10 +115,8 @@ class OrderService
             }
 
             // Final Calculation
-            $shippingCost = $storeSettings->deliveryFeeFor($calculatedSubtotal);
             $discount = 0; // Validate coupon if table available
-
-            $grandTotal = max(0, $calculatedSubtotal + $shippingCost - $discount);
+            $totals = $storeSettings->totalsFor($calculatedSubtotal, $discount);
 
             // Fetch Address if address_id provided
             $shippingAddressSnapshot = null;
@@ -139,9 +137,10 @@ class OrderService
                 'address_id' => $data['address_id'] ?? null,
                 'shipping_address_snapshot' => $shippingAddressSnapshot,
                 'subtotal' => $calculatedSubtotal,
-                'shipping_cost' => $shippingCost,
+                'shipping_cost' => $totals['shipping_cost'],
+                'tax_amount' => $totals['tax_amount'],
                 'discount' => $discount,
-                'total_amount' => $grandTotal,
+                'total_amount' => $totals['total_amount'],
                 'notes' => $data['notes'] ?? null,
             ];
 
@@ -154,6 +153,36 @@ class OrderService
 
             return $order;
         });
+    }
+
+    /**
+     * Prices a cart the same way checkout does, without reserving stock, so the
+     * app can show the delivery fee, tax and total before the order is placed.
+     *
+     * @param  array<int, array{product_id: string, quantity: int, selected_size?: string|null}>  $items
+     * @return array{subtotal: float, shipping_cost: float, tax_amount: float, discount: float, total_amount: float, tax_rate: float, free_delivery_threshold: float, currency: string, is_accepting_orders: bool}
+     */
+    public function quote(array $items): array
+    {
+        $storeSettings = StoreSetting::current();
+
+        $products = Product::query()
+            ->whereIn('id', collect($items)->pluck('product_id')->unique())
+            ->get(['id', 'price', 'discount_price', 'product_sizes'])
+            ->keyBy('id');
+
+        $subtotal = collect($items)->sum(fn (array $item): float => $this->determineUnitPrice(
+            $products[$item['product_id']],
+            $item['selected_size'] ?? $item['selectedSize'] ?? null,
+        ) * $item['quantity']);
+
+        return [
+            ...$storeSettings->totalsFor($subtotal),
+            'tax_rate' => (float) $storeSettings->tax_rate,
+            'free_delivery_threshold' => (float) $storeSettings->free_delivery_threshold,
+            'currency' => $storeSettings->currency,
+            'is_accepting_orders' => $storeSettings->isAcceptingOrders(),
+        ];
     }
 
     private function determineUnitPrice(Product $product, ?string $sizeName): float
