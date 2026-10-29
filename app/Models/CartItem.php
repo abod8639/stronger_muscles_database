@@ -54,6 +54,7 @@ class CartItem extends Model
             'price' => 'decimal:2',
             'quantity' => 'integer',
             'added_at' => 'datetime',
+            'product_name' => 'string',
             'image_urls' => 'array',
             'flavors' => 'array',
             'size' => 'array',
