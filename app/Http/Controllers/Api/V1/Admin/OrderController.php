@@ -123,6 +123,8 @@ class OrderController extends Controller
             'subtotal' => (float) $order->subtotal,
             'shippingCost' => (float) $order->shipping_cost,
             'shipping_cost' => (float) $order->shipping_cost,
+            'taxAmount' => (float) $order->tax_amount,
+            'tax_amount' => (float) $order->tax_amount,
             'discount' => (float) $order->discount,
             'total_amount' => (float) $order->total_amount,
             'tracking_number' => $order->tracking_number,
