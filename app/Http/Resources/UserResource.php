@@ -20,7 +20,7 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone_number,
             'photo_url' => $this->photo_url,
-            'default_address_id' => $this->default_address_id,
+            'default_address_id' => $this->default_address_id !== null ? (string) $this->default_address_id : null,
             'preferred_language' => $this->preferred_language ?? 'ar',
             'notifications_enabled' => (bool) ($this->notifications_enabled ?? true),
             'is_active' => (bool) ($this->is_active ?? true),
