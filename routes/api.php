@@ -96,6 +96,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/wishlist', [WishlistController::class, 'index']);
         Route::post('/wishlist', [WishlistController::class, 'store']);
         Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
+        Route::post('/orders/quote', [CustomerOrderController::class, 'quote']);
         Route::apiResource('orders', CustomerOrderController::class)->only(['index', 'show', 'store']);
 
         // Address Management
