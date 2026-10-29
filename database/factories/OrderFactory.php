@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,7 +29,7 @@ class OrderFactory extends Factory
             'status' => 'pending',
             'payment_status' => 'pending',
             'payment_method' => 'card',
-            'address_id' => 'addr-'.Str::random(5),
+            'address_id' => fn (array $attributes) => Address::factory()->create(['user_id' => $attributes['user_id']])->id,
             'shipping_address_snapshot' => [
                 'street' => fake()->streetAddress(),
                 'city' => fake()->city(),
