@@ -35,4 +35,3 @@ class CartItemResource extends JsonResource
         ];
     }
 }
-
