@@ -15,7 +15,7 @@ class NotificationRepository
     public function getAllPaginated(?string $search = null, ?string $type = null, int $perPage = 15): LengthAwarePaginator
     {
         $query = Notification::query()
-            ->with(['user:id,name,email', 'admin:id,name'])
+            ->with(['user:id,name,email,photo_url', 'admin:id,name,avatar'])
             ->latest();
 
         if ($search) {
@@ -37,7 +37,7 @@ class NotificationRepository
      */
     public function getForUser(User $user, int $perPage = 20): LengthAwarePaginator
     {
-        return Notification::query()
+        $paginator = Notification::query()
             ->select('notifications.*')
             ->selectRaw('CASE WHEN notification_reads.id IS NOT NULL THEN 1 ELSE 0 END AS is_read')
             ->leftJoin('notification_reads', function ($join) use ($user) {
@@ -50,6 +50,39 @@ class NotificationRepository
             })
             ->latest('notifications.created_at')
             ->paginate($perPage);
+
+        // Batch enrich notifications with support ticket data if needed (avoiding N+1)
+        $ticketIds = collect($paginator->items())
+            ->map(fn ($n) => $n->data['ticket_id'] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ticketIds->isNotEmpty()) {
+            $tickets = \App\Models\SupportTicket::withCount('messages')
+                ->whereIn('id', $ticketIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($paginator->items() as $notification) {
+                $tid = $notification->data['ticket_id'] ?? null;
+                if ($tid && isset($tickets[$tid])) {
+                    $t = $tickets[$tid];
+                    $existingData = $notification->data ?? [];
+                    $notification->data = array_merge([
+                        'ticket_id' => $t->id,
+                        'ticket_number' => $t->ticket_number,
+                        'priority' => $t->priority,
+                        'status' => $t->status,
+                        'category' => $t->category,
+                        'user_name' => $t->name ?? $t->user?->name,
+                        'messages_count' => $t->messages_count,
+                    ], $existingData);
+                }
+            }
+        }
+
+        return $paginator;
     }
 
     /**
