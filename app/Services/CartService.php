@@ -37,7 +37,7 @@ class CartService
                     'flavor' => is_array($item->flavors) ? ($item->flavors[0] ?? null) : $item->flavors,
                     'added_at' => $item->added_at,
                     'total_price' => (float) $item->getTotalPriceAttribute(),
-                    'product' => $item->product,
+                    'product' => $item->product ? (new \App\Http\Resources\Api\V1\ProductResource($item->product))->resolve() : null,
                 ];
             });
 
