@@ -14,7 +14,7 @@ class CartRepository
     public function getCartForUser(User $user): Collection
     {
         return $user->cartItems()
-            ->with(['product:id,name,price,discount_price,stock_quantity,image_urls,brand'])
+            ->with(['product'])
             ->latest('added_at')
             ->get();
     }
