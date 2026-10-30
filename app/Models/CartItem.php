@@ -20,6 +20,7 @@ class CartItem extends Model
         'id',
         'user_id',
         'product_id',
+        'variant_id',
         'product_name',
         'price',
         'image_urls',
@@ -75,6 +76,14 @@ class CartItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the product variant associated with the cart item.
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
     /**
