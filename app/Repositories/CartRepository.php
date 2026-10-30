@@ -38,6 +38,30 @@ class CartRepository
     }
 
     /**
+     * Find an existing cart item by product ID and attributes for a user.
+     */
+    public function findItemByProductAndAttributesForUser(
+        User $user,
+        string $productId,
+        ?string $flavor = null,
+        ?string $size = null,
+        ?string $variantId = null
+    ): ?CartItem {
+        return $user->cartItems()
+            ->where('product_id', $productId)
+            ->get()
+            ->first(function (CartItem $item) use ($flavor, $size, $variantId) {
+                if ($variantId && $item->variant_id === $variantId) {
+                    return true;
+                }
+                $itemFlavor = is_array($item->flavors) ? ($item->flavors[0] ?? null) : $item->flavors;
+                $itemSize = is_array($item->size) ? ($item->size[0] ?? null) : $item->size;
+
+                return $itemFlavor === $flavor && $itemSize === $size;
+            });
+    }
+
+    /**
      * Create a cart item for a user.
      */
     public function createItem(User $user, array $data): CartItem
