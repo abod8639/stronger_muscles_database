@@ -15,7 +15,7 @@ class NotificationRepository
     public function getAllPaginated(?string $search = null, ?string $type = null, int $perPage = 15): LengthAwarePaginator
     {
         $query = Notification::query()
-            ->with(['user:id,name,email,photo_url', 'admin:id,name,avatar'])
+            ->with(['user:id,name,email,photo_url', 'admin:id,name,photo_url'])
             ->latest();
 
         if ($search) {
