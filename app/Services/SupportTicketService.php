@@ -327,6 +327,13 @@ class SupportTicketService
             'data' => [
                 'ticket_id' => $ticket->id,
                 'ticket_number' => $ticket->ticket_number,
+                'priority' => $ticket->priority,
+                'status' => $ticket->status,
+                'category' => $ticket->category,
+                'user_name' => $ticket->name ?? $ticket->user?->name,
+                'admin_name' => $admin?->name ?? 'الدعم الفني',
+                'admin_avatar' => $admin?->avatar,
+                'messages_count' => $ticket->messages()->count(),
             ],
             'sent_by' => $admin?->id,
         ]);
@@ -337,8 +344,10 @@ class SupportTicketService
      */
     protected function syncToFirebase(SupportTicket $ticket, ?SupportMessage $newMessage = null): void
     {
-        $projectId = config('services.fcm.project_id') ?? 'stronger-muscles';
-        $rtdbUrl = config('services.firebase.database_url') ?? "https://{$projectId}-default-rtdb.firebaseio.com";
+        $rtdbUrl = config('services.firebase.database_url');
+        if (empty($rtdbUrl) || str_contains($rtdbUrl, 'stronger-muscles-default-rtdb') || str_contains($rtdbUrl, 'default-rtdb.firebaseio.com')) {
+            return;
+        }
 
         try {
             $ticketData = [
