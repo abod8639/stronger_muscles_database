@@ -46,7 +46,7 @@ class NotificationController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'تم إرسال الإشعار بنجاح',
-            'data' => new NotificationResource($notification->load(['user:id,name,email', 'admin:id,name'])),
+            'data' => new NotificationResource($notification->load(['user:id,name,email,photo_url', 'admin:id,name,avatar'])),
         ], 201);
     }
 
