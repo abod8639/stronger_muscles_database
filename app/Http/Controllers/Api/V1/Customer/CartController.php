@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\Cart\AddToCartRequest;
 use App\Http\Requests\Customer\Cart\UpdateCartItemRequest;
+use App\Http\Resources\Api\V1\CartItemResource;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 
@@ -44,7 +45,7 @@ class CartController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => $message,
-            'data' => $cartItem->load('product'),
+            'data' => new CartItemResource($cartItem->load('product')),
         ], $status);
     }
 
@@ -68,7 +69,7 @@ class CartController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Cart item updated',
-            'data' => $cartItem->fresh(['product']),
+            'data' => new CartItemResource($cartItem->fresh(['product'])),
         ]);
     }
 
