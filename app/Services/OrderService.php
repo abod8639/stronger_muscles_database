@@ -80,16 +80,27 @@ class OrderService
                 $product->increment('total_sales', $item['quantity']);
 
                 // If product has matching variants, deduct variant stock as well
-                if ($product->relationLoaded('variants') && $product->variants->isNotEmpty()) {
-                    foreach ($product->variants as $variant) {
-                        $attrs = $variant->attributes ?? [];
-                        $matchesSize = ! $selectedSize || (isset($attrs['size']) && $attrs['size'] === $selectedSize);
-                        $matchesFlavor = ! $selectedFlavor || (isset($attrs['flavor']) && $attrs['flavor'] === $selectedFlavor);
+                $variantId = $item['variant_id'] ?? null;
+                $matchedVariant = null;
 
-                        if ($matchesSize && $matchesFlavor) {
-                            $variant->decrement('stock_quantity', min($variant->stock_quantity, $item['quantity']));
-                            break;
+                if ($product->relationLoaded('variants') && $product->variants->isNotEmpty()) {
+                    if ($variantId) {
+                        $matchedVariant = $product->variants->firstWhere('id', $variantId);
+                    } else {
+                        foreach ($product->variants as $variant) {
+                            $attrs = $variant->attributes ?? [];
+                            $matchesSize = ! $selectedSize || (isset($attrs['size']) && $attrs['size'] === $selectedSize);
+                            $matchesFlavor = ! $selectedFlavor || (isset($attrs['flavor']) && $attrs['flavor'] === $selectedFlavor);
+
+                            if ($matchesSize && $matchesFlavor) {
+                                $matchedVariant = $variant;
+                                break;
+                            }
                         }
+                    }
+
+                    if ($matchedVariant) {
+                        $matchedVariant->decrement('stock_quantity', min($matchedVariant->stock_quantity, $item['quantity']));
                     }
                 }
 
@@ -104,6 +115,7 @@ class OrderService
                 $orderItemsData[] = [
                     'id' => (string) Str::uuid(),
                     'product_id' => $product->id,
+                    'variant_id' => $matchedVariant?->id ?? $variantId,
                     'product_name' => $product->name, // Pass array, Eloquent will cast
                     'unit_price' => $unitPrice,
                     'quantity' => $item['quantity'],
