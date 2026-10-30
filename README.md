@@ -23,6 +23,106 @@
 
 ---
 
+## System Architecture & Workflows
+
+### 1. High-Level Architecture Diagram
+The following diagram illustrates the complete end-to-end ecosystem, showing how client applications communicate through the authentication and routing layers down to the core service domain, data repositories, and third-party integrations:
+
+```mermaid
+flowchart TD
+    subgraph Clients["1. Client Applications (Flutter)"]
+        MobileApp["Flutter Mobile App (Customer)\n[iOS & Android]"]
+        AdminDashboard["Flutter Admin Dashboard\n[Web & Desktop]"]
+        GuestVisitor["Web / Guest Visitor"]
+    end
+
+    subgraph Gateway["2. Routing & Authentication (Laravel 12)"]
+        Throttle["Rate Limiter (5 requests/min)"]
+        CustomerGuard["Sanctum Customer Guard\n[auth:sanctum]"]
+        AdminGuard["Sanctum Admin Guard\n[auth:admin-api + isAdmin]"]
+        PublicShop["Public Catalog Routes\n[/api/v1/shop/*]"]
+        WebhookRoute["Payment Webhook Routes\n[/api/v1/webhooks/*]"]
+    end
+
+    subgraph Core["3. Application Architecture (Service Layer & Repositories)"]
+        Controllers["API Controllers & Form Requests Validation"]
+        Services["Domain Service Layer\n(OrderService, CartService, PaymentService,\nSupportTicketService, NotificationService)"]
+        Repositories["Repository Pattern Layer\n(OrderRepository, CartRepository, NotificationRepository, etc.)"]
+        Models["Eloquent Models & API Resources"]
+    end
+
+    subgraph Storage["4. Database & External Services"]
+        DB[("MySQL Database\n(Composite Indexes, Transactions, lockForUpdate)")]
+        FCM["Firebase Cloud Messaging (FCM)"]
+        Payments["Payment Gateways (Paymob / Stripe)"]
+        Reverb["Laravel Reverb (WebSockets Alerts)"]
+        MediaStorage["File Storage (Product & Category Media)"]
+    end
+
+    MobileApp -->|"Customer Bearer Token"| CustomerGuard
+    MobileApp -->|"Login / Register Requests"| Throttle
+    AdminDashboard -->|"Admin Bearer Token"| AdminGuard
+    GuestVisitor --> PublicShop
+    Payments --> WebhookRoute
+
+    CustomerGuard --> Controllers
+    AdminGuard --> Controllers
+    Throttle --> Controllers
+    PublicShop --> Controllers
+    WebhookRoute --> Controllers
+
+    Controllers --> Services
+    Services --> Repositories
+    Repositories --> Models
+    Models --> DB
+
+    Services -.->|"Push Notifications"| FCM
+    Services -.->|"Initiate Order Payment"| Payments
+    Services -.->|"Broadcast Real-Time Events"| Reverb
+    Controllers -.->|"Upload Product/Category Images"| MediaStorage
+```
+
+### 2. Concurrency-Safe Order Lifecycle Sequence
+Critical e-commerce flows (such as cart pricing quotes and checkout execution) utilize pessimistic row-level locking (`lockForUpdate`) within database transactions to guarantee data consistency and eliminate inventory overselling:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Flutter Mobile App
+    participant Controller as CustomerOrderController
+    participant OrderService as OrderService
+    participant StoreSetting as StoreSetting
+    participant DB as MySQL Database
+    participant FCM as Firebase (FCM)
+
+    Note over Customer, Controller: Phase 1: Real-Time Pricing Quote
+    Customer->>Controller: POST /api/v1/customer/orders/quote (Items, Sizes)
+    Controller->>OrderService: quote(items)
+    OrderService->>StoreSetting: totalsFor(subtotal)
+    StoreSetting-->>OrderService: Delivery fee, Tax (14%), Free Threshold
+    OrderService-->>Controller: Calculated Pricing Breakdown
+    Controller-->>Customer: 200 OK (Subtotal, Shipping, Tax, Grand Total)
+
+    Note over Customer, DB: Phase 2: Transactional & Concurrency-Safe Checkout
+    Customer->>Controller: POST /api/v1/customer/orders (Address, Items, Variant IDs)
+    Controller->>OrderService: processCheckout(user, data)
+    OrderService->>DB: BEGIN TRANSACTION
+    OrderService->>DB: SELECT * FROM products WHERE id IN (...) FOR UPDATE
+    Note over OrderService, DB: Row-level lock acquired (Prevents race conditions)
+    OrderService->>DB: Verify Stock & Deduct Inventory (Variants/Products)
+    OrderService->>DB: INSERT INTO orders & order_items
+    OrderService->>DB: DELETE FROM cart_items WHERE user_id = ?
+    OrderService->>DB: COMMIT TRANSACTION
+    OrderService-->>Controller: Order Created Successfully
+    Controller-->>Customer: 201 Created (OrderResource)
+
+    opt When Order Notifications are Enabled
+        OrderService->>FCM: Broadcast Order Placed Push Notification
+    end
+```
+
+---
+
 ## Tech Stack
 
 | Component | Technology | Description |
@@ -39,7 +139,7 @@
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 ├── app/
