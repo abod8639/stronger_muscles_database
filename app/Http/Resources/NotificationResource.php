@@ -30,10 +30,12 @@ class NotificationResource extends JsonResource
                 'id' => (string) $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
+                'photo_url' => $this->user->photo_url,
             ]),
             'admin' => $this->whenLoaded('admin', fn () => [
                 'id' => (string) $this->admin->id,
                 'name' => $this->admin->name,
+                'avatar' => $this->admin->avatar ?? null,
             ]),
             'data' => $this->data,
             'image_url' => $this->image_url,
