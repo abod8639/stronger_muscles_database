@@ -46,6 +46,14 @@ class Admin extends Authenticatable
     }
 
     /**
+     * Get the avatar attribute for compatibility with photo_url.
+     */
+    public function getAvatarAttribute(): ?string
+    {
+        return $this->photo_url;
+    }
+
+    /**
      * Check if admin is a super admin.
      */
     public function isSuperAdmin(): bool
