@@ -4,18 +4,18 @@ This document is the definitive API reference for integrating the **Stronger Mus
 
 ---
 
-## 📌 General Information
+## General Information
 
-### 🌐 Base URLs
+### Base URLs
 - **Local Development:** `http://localhost:8000/api/v1` (or your local IP / Android emulator `http://10.0.2.2:8000/api/v1`)
 - **Staging / Production:** `https://api.strongermuscles.com/api/v1`
 
-### 🔑 Authentication Architecture
+### Authentication Architecture
 The API utilizes **Laravel Sanctum** with dual guards:
 - **Customer / App Guard:** `auth:sanctum` (User model)
 - **Admin / Dashboard Guard:** `auth:admin-api` + `isAdmin` middleware (Admin model)
 
-### 📋 Standard Request Headers
+### Standard Request Headers
 ```http
 Accept: application/json
 Content-Type: application/json
@@ -26,7 +26,7 @@ Accept-Language: ar
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 1. [Authentication & Profile (App)](#1-authentication--profile-app)
 2. [Public Shop & Catalog](#2-public-shop--catalog)
 3. [Customer APIs (Protected)](#3-customer-apis-protected)
@@ -652,7 +652,7 @@ Calculated directly inside database queries for speed and efficiency:
   - **Payload:**
     ```json
     {
-      "title": "Weekend Deal 🔥",
+      "title": "Weekend Deal",
       "body": "20% off all protein supplements for a limited time!",
       "type": "promo",
       "target_type": "all",
