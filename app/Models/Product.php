@@ -121,6 +121,11 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
+    public function brandRelation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
+    }
+
     /**
      * Get the order items for the product.
      */
