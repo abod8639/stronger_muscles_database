@@ -6,6 +6,7 @@ use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Repositories\CartRepository;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -52,58 +53,94 @@ class CartService
      */
     public function addToCart(User $user, array $data): CartItem
     {
-        $product = Product::active()
-            ->inStock()
-            ->select(['id', 'name', 'price', 'discount_price', 'image_urls', 'stock_quantity'])
-            ->findOrFail($data['product_id']);
+        return DB::transaction(function () use ($user, $data) {
+            $product = Product::active()
+                ->inStock()
+                ->with(['variants'])
+                ->select(['id', 'name', 'price', 'discount_price', 'image_urls', 'stock_quantity'])
+                ->findOrFail($data['product_id']);
 
-        if ($data['quantity'] > $product->stock_quantity) {
-            throw ValidationException::withMessages([
-                'quantity' => ['Requested quantity exceeds available stock'],
-            ]);
-        }
+            $flavor = $data['selected_flavor'] ?? $data['flavor'] ?? null;
+            $size = $data['selected_size'] ?? $data['size'] ?? null;
+            $variantId = $data['variant_id'] ?? null;
 
-        $price = ($product->discount_price > 0 && $product->discount_price < $product->price)
-            ? $product->discount_price
-            : $product->price;
+            // Match variant if variant_id provided or if matching size/flavor attributes exist
+            $variant = null;
+            if ($variantId) {
+                $variant = $product->variants->firstWhere('id', $variantId);
+            } elseif ($flavor || $size) {
+                $variant = $product->variants->first(function ($v) use ($flavor, $size) {
+                    $attrs = $v->attributes ?? [];
+                    $matchSize = ! $size || (isset($attrs['size']) && $attrs['size'] === $size);
+                    $matchFlavor = ! $flavor || (isset($attrs['flavor']) && $attrs['flavor'] === $flavor);
 
-        $flavor = $data['selected_flavor'] ?? $data['flavor'] ?? null;
-        $size = $data['selected_size'] ?? $data['size'] ?? null;
+                    return $matchSize && $matchFlavor;
+                });
+            }
 
-        $existingItem = $this->cartRepository->findItemByProductForUser($user, $data['product_id']);
+            $effectiveVariantId = $variant?->id ?? $variantId;
+            $availableStock = $variant ? $variant->stock_quantity : $product->stock_quantity;
 
-        if ($existingItem) {
-            $newQuantity = $existingItem->quantity + $data['quantity'];
-
-            if ($newQuantity > $product->stock_quantity) {
+            if ($data['quantity'] > $availableStock) {
                 throw ValidationException::withMessages([
-                    'quantity' => ['Total quantity exceeds available stock'],
+                    'quantity' => ['الكمية المطلوبة تتجاوز المخزون المتوفر'],
                 ]);
             }
 
-            return $this->cartRepository->updateItem($existingItem, [
-                'quantity' => $newQuantity,
-                'flavors' => $flavor ? [$flavor] : ($existingItem->flavors ?? []),
-                'size' => $size ? (is_array($size) ? $size : [$size]) : ($existingItem->size ?? []),
+            $price = ($product->discount_price > 0 && $product->discount_price < $product->price)
+                ? $product->discount_price
+                : $product->price;
+
+            if ($variant && $variant->price > 0) {
+                $price = ($variant->discount_price > 0 && $variant->discount_price < $variant->price)
+                    ? $variant->discount_price
+                    : $variant->price;
+            }
+
+            $existingItem = $this->cartRepository->findItemByProductAndAttributesForUser(
+                $user,
+                $data['product_id'],
+                $flavor,
+                $size,
+                $effectiveVariantId
+            );
+
+            if ($existingItem) {
+                $newQuantity = $existingItem->quantity + $data['quantity'];
+
+                if ($newQuantity > $availableStock) {
+                    throw ValidationException::withMessages([
+                        'quantity' => ['إجمالي الكمية المطلوبة يتجاوز المخزون المتوفر'],
+                    ]);
+                }
+
+                return $this->cartRepository->updateItem($existingItem, [
+                    'quantity' => $newQuantity,
+                    'variant_id' => $effectiveVariantId,
+                    'flavors' => $flavor ? [$flavor] : ($existingItem->flavors ?? []),
+                    'size' => $size ? (is_array($size) ? $size : [$size]) : ($existingItem->size ?? []),
+                    'added_at' => now(),
+                ]);
+            }
+
+            $productName = is_array($product->name)
+                ? ($product->name['ar'] ?? $product->name['en'] ?? json_encode($product->name, JSON_UNESCAPED_UNICODE))
+                : (string) $product->name;
+
+            return $this->cartRepository->createItem($user, [
+                'id' => (string) Str::uuid(),
+                'user_id' => $user->id,
+                'product_id' => $data['product_id'],
+                'variant_id' => $effectiveVariantId,
+                'product_name' => $productName,
+                'price' => $price,
+                'image_urls' => $product->image_urls,
+                'quantity' => $data['quantity'],
+                'flavors' => $flavor ? [$flavor] : ($data['flavors'] ?? []),
+                'size' => $size ? (is_array($size) ? $size : [$size]) : ($data['size'] ?? []),
                 'added_at' => now(),
             ]);
-        }
-
-        $productName = is_array($product->name)
-            ? ($product->name['ar'] ?? $product->name['en'] ?? json_encode($product->name, JSON_UNESCAPED_UNICODE))
-            : (string) $product->name;
-
-        return $this->cartRepository->createItem($user, [
-            'id' => (string) Str::uuid(),
-            'product_id' => $data['product_id'],
-            'product_name' => $productName,
-            'price' => $price,
-            'image_urls' => $product->image_urls,
-            'quantity' => $data['quantity'],
-            'flavors' => $flavor ? [$flavor] : ($data['flavors'] ?? []),
-            'size' => $size ? (is_array($size) ? $size : [$size]) : ($data['size'] ?? []),
-            'added_at' => now(),
-        ]);
+        });
     }
 
     /**
