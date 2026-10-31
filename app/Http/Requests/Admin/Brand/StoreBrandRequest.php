@@ -20,6 +20,16 @@ class StoreBrandRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        if (is_string($this->input('name'))) {
+            $nameStr = trim($this->input('name'));
+            $this->merge([
+                'name' => [
+                    'ar' => $nameStr,
+                    'en' => $nameStr,
+                ],
+            ]);
+        }
+
         if (! $this->has('slug') || empty($this->input('slug'))) {
             $nameEn = $this->input('name.en');
             $nameAr = $this->input('name.ar');
