@@ -56,8 +56,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/alerts', [AdminOrderController::class, 'alerts']);
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
-        Route::patch('/orders/{id}', [AdminOrderController::class, 'update']);
-        Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+        Route::match(['put', 'patch'], '/orders/{id}', [AdminOrderController::class, 'update']);
+        Route::match(['put', 'patch'], '/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
 
         // Notifications management
         Route::get('/notifications', [\App\Http\Controllers\Api\V1\Admin\NotificationController::class, 'index']);
