@@ -129,7 +129,7 @@ class OrderController extends Controller
             'total_amount' => (float) $order->total_amount,
             'tracking_number' => $order->tracking_number,
             'notes' => $order->notes,
-            'shipping_address' => $order->shipping_address_snapshot,
+            'shipping_address' => $this->resolveShippingAddress($order),
             'order_items' => $order->orderItems->map(fn ($item) => [
                 'id' => (string) $item->id,
                 'order_id' => (string) $item->order_id,
@@ -149,5 +149,37 @@ class OrderController extends Controller
             'createdAt' => $order->created_at?->toIso8601String(),
             'updatedAt' => $order->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Resolves the shipping address ensuring coordinates are preserved from live address if missing.
+     */
+    protected function resolveShippingAddress(Order $order): ?array
+    {
+        $address = $order->shipping_address_snapshot;
+        if (!is_array($address) && !empty($address)) {
+            $decoded = json_decode($address, true);
+            if (is_array($decoded)) {
+                $address = $decoded;
+            }
+        }
+
+        if (empty($address) && $order->address_id) {
+            $dbAddress = \App\Models\Address::find($order->address_id);
+            return $dbAddress ? $dbAddress->toArray() : null;
+        }
+
+        if (is_array($address) && (empty($address['latitude']) || empty($address['longitude'])) && $order->address_id) {
+            $dbAddress = \App\Models\Address::find($order->address_id);
+            if ($dbAddress && $dbAddress->latitude && $dbAddress->longitude) {
+                $address['latitude'] = (float) $dbAddress->latitude;
+                $address['longitude'] = (float) $dbAddress->longitude;
+                if (empty($address['street']) || $address['street'] === '1600 Amphitheatre Pkwy') {
+                    $address['street'] = $dbAddress->street;
+                }
+            }
+        }
+
+        return is_array($address) ? $address : null;
     }
 }
