@@ -174,16 +174,18 @@ class SupportTicketService
             // Update ticket status
             $status = $newStatus ?? 'waiting_user';
             $this->ticketRepository->updateStatus($ticket, $status);
-
-            // Notify user via Push Notification & In-app Notification
-            $this->notifyUserOfReply($ticket, $message, $admin);
         }
 
-        // Broadcast WebSocket event
+        // Broadcast WebSocket event immediately for zero-latency real-time delivery
         try {
             SupportMessageSent::dispatch($ticket, $supportMessage);
         } catch (\Throwable $e) {
             Log::warning("WebSocket broadcast failed for SupportMessageSent: {$e->getMessage()}");
+        }
+
+        if (! $isInternalNote) {
+            // Notify user via Push Notification & In-app Notification (after real-time broadcast)
+            $this->notifyUserOfReply($ticket, $message, $admin);
         }
 
         // Sync to Firebase
