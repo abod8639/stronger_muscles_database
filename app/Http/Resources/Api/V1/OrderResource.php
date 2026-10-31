@@ -14,6 +14,27 @@ class OrderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $shippingAddress = $this->shipping_address_snapshot;
+        if (!is_array($shippingAddress) && !empty($shippingAddress)) {
+            $decoded = json_decode($shippingAddress, true);
+            if (is_array($decoded)) {
+                $shippingAddress = $decoded;
+            }
+        }
+        if (empty($shippingAddress) && $this->address_id) {
+            $dbAddress = \App\Models\Address::find($this->address_id);
+            $shippingAddress = $dbAddress ? $dbAddress->toArray() : null;
+        } elseif (is_array($shippingAddress) && (empty($shippingAddress['latitude']) || empty($shippingAddress['longitude'])) && $this->address_id) {
+            $dbAddress = \App\Models\Address::find($this->address_id);
+            if ($dbAddress && $dbAddress->latitude && $dbAddress->longitude) {
+                $shippingAddress['latitude'] = (float) $dbAddress->latitude;
+                $shippingAddress['longitude'] = (float) $dbAddress->longitude;
+                if (empty($shippingAddress['street']) || $shippingAddress['street'] === '1600 Amphitheatre Pkwy') {
+                    $shippingAddress['street'] = $dbAddress->street;
+                }
+            }
+        }
+
         return [
             'id' => (string) $this->id,
             'user_id' => (string) $this->user_id,
@@ -30,7 +51,7 @@ class OrderResource extends JsonResource
             'tracking_number' => $this->tracking_number,
             'phone_number' => $this->phone_number,
             'notes' => $this->notes,
-            'shipping_address' => $this->shipping_address_snapshot,
+            'shipping_address' => is_array($shippingAddress) ? $shippingAddress : null,
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
