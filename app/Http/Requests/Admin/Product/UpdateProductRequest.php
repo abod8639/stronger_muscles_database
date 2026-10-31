@@ -44,6 +44,8 @@ class UpdateProductRequest extends FormRequest
             'product_sizes.*.serving_size' => 'nullable|string',
             'product_sizes.*.stock_quantity' => 'nullable|integer|min:0',
             'product_sizes.*.stock' => 'nullable|integer|min:0',
+            'product_sizes.*.flavors' => 'nullable|array',
+            'product_sizes.*.flavors.*' => 'nullable|string',
             'size' => 'nullable|array',
             'product_variants' => 'nullable|array',
             'variants' => 'nullable|array',
