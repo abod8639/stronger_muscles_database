@@ -100,6 +100,21 @@ test('cancelling order restores stock', function () {
     expect($product->fresh()->stock_quantity)->toBe(13);
 });
 
+test('admin can update order status via put orders/{id}', function () {
+    $admin = Admin::factory()->create();
+    Sanctum::actingAs($admin, ['*'], 'admin-api');
+    $order = Order::factory()->create(['status' => 'pending']);
+
+    $response = $this->putJson('/api/v1/admin/orders/'.$order->id, [
+        'status' => 'shipped',
+    ]);
+
+    $response->assertStatus(200)
+        ->assertJsonFragment(['status' => 'shipped']);
+
+    $this->assertDatabaseHas('orders', ['id' => $order->id, 'status' => 'shipped']);
+});
+
 test('updating with invalid status returns 422', function () {
     $admin = Admin::factory()->create();
     Sanctum::actingAs($admin, ['*'], 'admin-api');
